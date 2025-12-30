@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import {
   listenToCameras,
   createCamera as createCameraService,
   updateCamera,
 } from "./services/cameras.service";
-import { listenToOperations } from "./services/operations.service";
+import { useAuth } from "./auth/useAuth";
 
-import { auth } from "./firebase";
+import { listenToOperations } from "./services/operations.service";
 import "leaflet/dist/leaflet.css";
 import {
   MapContainer,
@@ -227,25 +226,11 @@ function CameraItem({
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [user, setUser] = useState(null);
   const [cameras, setCameras] = useState([]);
   const [newCameraId, setNewCameraId] = useState("");
   const [operationsByCamera, setOperationsByCamera] = useState({});
   const [selectedCameraId, setSelectedCameraId] = useState(null);
-  const [activeProjectId, setActiveProjectId] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-
-  const DEFAULT_PROJECT_ID = "proj_1";
-
-  const login = async () => {
-    try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      setUser(result.user);
-    } catch (err) {
-      console.error("Error de login:", err);
-      alert("No se pudo iniciar sesión. Verificá email y contraseña.");
-    }
-  };
+  const { user, activeProjectId, authLoading, login } = useAuth();
 
   const createCamera = async () => {
     if (!newCameraId) return;
@@ -306,29 +291,6 @@ function App() {
     };
   }, [authLoading, user, cameras, activeProjectId]);
 
-  useEffect(() => {
-    console.log("Auth effect mounted");
-
-    const unsub = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log("onAuthStateChanged fired:", firebaseUser);
-
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        setActiveProjectId(DEFAULT_PROJECT_ID);
-      } else {
-        setUser(null);
-        setActiveProjectId(null);
-      }
-
-      setAuthLoading(false);
-    });
-
-    return () => {
-      console.log("Auth effect unmounted");
-      unsub();
-    };
-  }, []);
-
   if (authLoading) {
     return <div>Cargando sesión...</div>;
   }
@@ -342,7 +304,7 @@ function App() {
           placeholder="password"
           onChange={(e) => setPassword(e.target.value)}
         />
-        <button onClick={login}>Login</button>
+        <button onClick={() => login(email, password)}>Login</button>
       </div>
     );
   }
