@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import {
-  listenToCameras,
-  createCamera as createCameraService,
-  updateCamera,
-} from "./services/cameras.service";
-import { useAuth } from "./auth/useAuth";
 
-import { listenToOperations } from "./services/operations.service";
+import { useAuth } from "./auth/useAuth";
+import { ProjectContext } from "./project/ProjectContext";
+import { useProject } from "./project/useProject";
 import "leaflet/dist/leaflet.css";
 import {
   MapContainer,
@@ -226,16 +222,20 @@ function CameraItem({
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [cameras, setCameras] = useState([]);
   const [newCameraId, setNewCameraId] = useState("");
-  const [operationsByCamera, setOperationsByCamera] = useState({});
   const [selectedCameraId, setSelectedCameraId] = useState(null);
   const { user, activeProjectId, authLoading, login } = useAuth();
+  const project = useProject({
+    projectId: activeProjectId,
+    user,
+    authLoading,
+  });
+
   const handleUpdateCamera = (cameraId, updates) => {
-    return updateCamera(cameraId, activeProjectId, updates);
+    return project.updateCamera(cameraId, updates);
   };
 
-  const createCamera = async () => {
+  const handleCreateCamera = async () => {
     if (!newCameraId) return;
 
     if (!/^CT_\d{3}$/.test(newCameraId)) {
@@ -244,55 +244,13 @@ function App() {
     }
 
     try {
-      await createCameraService(newCameraId, activeProjectId);
+      await project.createCamera(newCameraId);
       setNewCameraId("");
     } catch (err) {
       console.error("Error creando cámara:", err);
       alert("No se pudo crear la cámara.");
     }
   };
-
-  // Camaras
-  //
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user || !activeProjectId) return;
-
-    const unsubscribe = listenToCameras(
-      activeProjectId,
-      setCameras,
-      (error) => {
-        if (error.code === "permission-denied") {
-          console.warn("Lost access to project");
-        }
-      },
-    );
-
-    return () => unsubscribe();
-  }, [authLoading, user, activeProjectId]);
-
-  // Operaciones
-  //
-  useEffect(() => {
-    if (authLoading) return;
-    if (!user || !activeProjectId || cameras.length === 0) return;
-
-    const unsubscribers = cameras.map((camera) =>
-      listenToOperations(
-        camera.id,
-        (ops) =>
-          setOperationsByCamera((prev) => ({
-            ...prev,
-            [camera.id]: ops,
-          })),
-        () => {},
-      ),
-    );
-
-    return () => {
-      unsubscribers.forEach((unsub) => unsub());
-    };
-  }, [authLoading, user, cameras, activeProjectId]);
 
   if (authLoading) {
     return <div>Cargando sesión...</div>;
@@ -315,44 +273,45 @@ function App() {
   return (
     <div>
       <h1>CT Tracker</h1>
+      <ProjectContext.Provider value={project}>
+        {user && activeProjectId && (
+          <>
+            <p>Logueado como {user.email}</p>
 
-      {user && activeProjectId && (
-        <>
-          <p>Logueado como {user.email}</p>
+            <h2>Mapa de cámaras</h2>
+            <CameraMap
+              cameras={project.cameras}
+              selectedCameraId={selectedCameraId}
+              onSelectCamera={setSelectedCameraId}
+              onUpdateCamera={handleUpdateCamera}
+            />
 
-          <h2>Mapa de cámaras</h2>
-          <CameraMap
-            cameras={cameras}
-            selectedCameraId={selectedCameraId}
-            onSelectCamera={setSelectedCameraId}
-            onUpdateCamera={handleUpdateCamera}
-          />
+            <h2>Cámaras</h2>
 
-          <h2>Cámaras</h2>
+            {project.cameras.length === 0 && <p>No hay cámaras</p>}
 
-          {cameras.length === 0 && <p>No hay cámaras</p>}
+            <input
+              placeholder="CT_005"
+              value={newCameraId}
+              onChange={(e) => setNewCameraId(e.target.value)}
+            />
+            <button onClick={handleCreateCamera}>Crear cámara</button>
 
-          <input
-            placeholder="CT_005"
-            value={newCameraId}
-            onChange={(e) => setNewCameraId(e.target.value)}
-          />
-          <button onClick={createCamera}>Crear cámara</button>
-
-          <ul>
-            {cameras.map((camera) => (
-              <CameraItem
-                key={camera.id + (camera.updatedAt?.seconds ?? "")}
-                camera={camera}
-                operations={operationsByCamera[camera.id] || []}
-                onUpdateCamera={handleUpdateCamera}
-                onSelect={() => setSelectedCameraId(camera.id)}
-                isSelected={camera.id === selectedCameraId}
-              />
-            ))}
-          </ul>
-        </>
-      )}
+            <ul>
+              {project.cameras.map((camera) => (
+                <CameraItem
+                  key={camera.id}
+                  camera={camera}
+                  operations={project.operationsByCamera[camera.id] || []}
+                  onUpdateCamera={handleUpdateCamera}
+                  onSelect={() => setSelectedCameraId(camera.id)}
+                  isSelected={camera.id === selectedCameraId}
+                />
+              ))}
+            </ul>
+          </>
+        )}
+      </ProjectContext.Provider>
     </div>
   );
 }
