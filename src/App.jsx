@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useState, useContext } from "react";
 import { useAuth } from "./auth/useAuth";
 import { ProjectContext } from "./project/ProjectContext";
 import { useProject } from "./project/useProject";
+import { UIContext } from "./ui/UIContext";
+import { useUI } from "./ui/useUI";
 import "leaflet/dist/leaflet.css";
 import {
   MapContainer,
@@ -25,11 +26,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: markerShadow,
 });
 
-function MapClickHandler({ selectedCameraId, onSetLocation }) {
+function MapClickHandler({ onSetLocation }) {
+  const { selectedCameraId } = useContext(UIContext);
+
   useMapEvents({
     click(e) {
-      console.log("CLICK MAPA", selectedCameraId);
-
       if (!selectedCameraId) return;
 
       onSetLocation(selectedCameraId, {
@@ -44,8 +45,9 @@ function MapClickHandler({ selectedCameraId, onSetLocation }) {
   return null;
 }
 
-function FitBounds({ cameras, selectedCameraId }) {
+function FitBounds({ cameras }) {
   const map = useMap();
+  const { selectedCameraId } = useContext(UIContext);
 
   useEffect(() => {
     if (selectedCameraId) {
@@ -70,12 +72,9 @@ function FitBounds({ cameras, selectedCameraId }) {
   return null;
 }
 
-function CameraMap({
-  cameras,
-  onSelectCamera,
-  selectedCameraId,
-  onUpdateCamera,
-}) {
+function CameraMap({ cameras, onUpdateCamera }) {
+  const { setSelectedCameraId } = useContext(UIContext);
+
   const camerasWithLocation = cameras.filter(
     (c) =>
       typeof c.location?.lat === "number" &&
@@ -93,22 +92,16 @@ function CameraMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <FitBounds
-        cameras={camerasWithLocation}
-        selectedCameraId={selectedCameraId}
-      />
+      <FitBounds cameras={camerasWithLocation} />
 
-      <MapClickHandler
-        selectedCameraId={selectedCameraId}
-        onSetLocation={onUpdateCamera}
-      />
+      <MapClickHandler onSetLocation={onUpdateCamera} />
 
       {camerasWithLocation.map((camera) => (
         <Marker
           key={camera.id}
           position={[camera.location.lat, camera.location.lng]}
           eventHandlers={{
-            click: () => onSelectCamera(camera.id),
+            click: () => setSelectedCameraId(camera.id),
           }}
         >
           <Popup>
@@ -122,16 +115,11 @@ function CameraMap({
   );
 }
 
-function CameraItem({
-  camera,
-  operations,
-  onUpdateCamera,
-  onSelect,
-  isSelected,
-}) {
+function CameraItem({ camera, operations, onUpdateCamera, isSelected }) {
   const [draftLocation, setDraftLocation] = useState(camera.location);
   const [isExpanded, setIsExpanded] = useState(false);
   const MAX_VISIBLE = 3;
+  const { setSelectedCameraId } = useContext(UIContext);
   const visibleOperations = isExpanded
     ? operations
     : operations.slice(0, MAX_VISIBLE);
@@ -145,7 +133,10 @@ function CameraItem({
         borderRadius: "4px",
       }}
     >
-      <strong onClick={onSelect} style={{ cursor: "pointer" }}>
+      <strong
+        onClick={() => setSelectedCameraId(camera.id)}
+        style={{ cursor: "pointer" }}
+      >
         {camera.id}
       </strong>
       <br />
@@ -220,10 +211,7 @@ function CameraItem({
 }
 
 function App() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [newCameraId, setNewCameraId] = useState("");
-  const [selectedCameraId, setSelectedCameraId] = useState(null);
+  const ui = useUI();
   const { user, activeProjectId, authLoading, login } = useAuth();
   const project = useProject({
     projectId: activeProjectId,
@@ -236,16 +224,16 @@ function App() {
   };
 
   const handleCreateCamera = async () => {
-    if (!newCameraId) return;
+    if (!ui.newCameraId) return;
 
-    if (!/^CT_\d{3}$/.test(newCameraId)) {
+    if (!/^CT_\d{3}$/.test(ui.newCameraId)) {
       alert("Formato inválido. Usar CT_XXX (ej: CT_005)");
       return;
     }
 
     try {
-      await project.createCamera(newCameraId);
-      setNewCameraId("");
+      await project.createCamera(ui.newCameraId);
+      ui.setNewCameraId("");
     } catch (err) {
       console.error("Error creando cámara:", err);
       alert("No se pudo crear la cámara.");
@@ -259,13 +247,16 @@ function App() {
   if (!user) {
     return (
       <div>
-        <input placeholder="email" onChange={(e) => setEmail(e.target.value)} />
+        <input
+          placeholder="email"
+          onChange={(e) => ui.setEmail(e.target.value)}
+        />
         <input
           type="password"
           placeholder="password"
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => ui.setPassword(e.target.value)}
         />
-        <button onClick={() => login(email, password)}>Login</button>
+        <button onClick={() => login(ui.email, ui.password)}>Login</button>
       </div>
     );
   }
@@ -274,43 +265,43 @@ function App() {
     <div>
       <h1>CT Tracker</h1>
       <ProjectContext.Provider value={project}>
-        {user && activeProjectId && (
-          <>
-            <p>Logueado como {user.email}</p>
+        <UIContext.Provider value={ui}>
+          {user && activeProjectId && (
+            <>
+              <p>Logueado como {user.email}</p>
 
-            <h2>Mapa de cámaras</h2>
-            <CameraMap
-              cameras={project.cameras}
-              selectedCameraId={selectedCameraId}
-              onSelectCamera={setSelectedCameraId}
-              onUpdateCamera={handleUpdateCamera}
-            />
+              <h2>Mapa de cámaras</h2>
+              <CameraMap
+                cameras={project.cameras}
+                onUpdateCamera={handleUpdateCamera}
+              />
 
-            <h2>Cámaras</h2>
+              <h2>Cámaras</h2>
 
-            {project.cameras.length === 0 && <p>No hay cámaras</p>}
+              {project.cameras.length === 0 && <p>No hay cámaras</p>}
 
-            <input
-              placeholder="CT_005"
-              value={newCameraId}
-              onChange={(e) => setNewCameraId(e.target.value)}
-            />
-            <button onClick={handleCreateCamera}>Crear cámara</button>
+              <input
+                placeholder="CT_005"
+                value={ui.newCameraId}
+                onChange={(e) => ui.setNewCameraId(e.target.value)}
+              />
+              <button onClick={handleCreateCamera}>Crear cámara</button>
 
-            <ul>
-              {project.cameras.map((camera) => (
-                <CameraItem
-                  key={camera.id}
-                  camera={camera}
-                  operations={project.operationsByCamera[camera.id] || []}
-                  onUpdateCamera={handleUpdateCamera}
-                  onSelect={() => setSelectedCameraId(camera.id)}
-                  isSelected={camera.id === selectedCameraId}
-                />
-              ))}
-            </ul>
-          </>
-        )}
+              <ul>
+                {project.cameras.map((camera) => (
+                  <CameraItem
+                    key={camera.id}
+                    camera={camera}
+                    operations={project.operationsByCamera[camera.id] || []}
+                    onUpdateCamera={handleUpdateCamera}
+                    onSelect={() => ui.setSelectedCameraId(camera.id)}
+                    isSelected={camera.id === ui.selectedCameraId}
+                  />
+                ))}
+              </ul>
+            </>
+          )}
+        </UIContext.Provider>
       </ProjectContext.Provider>
     </div>
   );

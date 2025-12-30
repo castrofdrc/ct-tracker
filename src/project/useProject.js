@@ -6,11 +6,13 @@ import {
 } from "../services/cameras.service";
 import { listenToOperations } from "../services/operations.service";
 
-export function useProject(projectId, authLoading, user) {
+export function useProject({ projectId, authLoading, user }) {
   const [cameras, setCameras] = useState([]);
   const [operationsByCamera, setOperationsByCamera] = useState({});
 
   useEffect(() => {
+    // Reset explícito de estado al cambiar de proyecto
+    // Evita datos zombis entre proyectos
     setCameras([]);
     setOperationsByCamera({});
   }, [projectId]);
