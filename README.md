@@ -1,16 +1,100 @@
-# React + Vite
+# CT Tracker — MVP v0.1.0
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CT Tracker es una aplicación web para el seguimiento operativo de cámaras trampa (camera traps).
 
-Currently, two official plugins are available:
+## Objetivo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Gestionar cámaras físicas identificadas de forma única, registrar cambios de estado y ubicación, mantener un historial auditable de operaciones y visualizar cámaras georreferenciadas en un mapa.
 
-## React Compiler
+La aplicación es operativa, no analítica.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+* React + Vite
+* Firebase Auth
+* Firestore
+* React-Leaflet
+* Firebase Hosting
+
+---
+
+## Modelo de datos
+
+### projects/{projectId}
+
+```json
+{
+  "members": ["uid", "..."]
+}
+```
+
+* Define el límite de seguridad
+* El frontend **no crea ni modifica proyectos**
+* Todo acceso depende de la pertenencia al proyecto
+
+---
+
+### cameras/{cameraId}
+
+```json
+{
+  "projectId": "string",
+  "status": "active | inactive | broken | lost",
+  "location": { "lat": number | null, "lng": number | null },
+  "createdAt": timestamp,
+  "updatedAt": timestamp
+}
+```
+
+* `cameraId` es semántico (ej: CT_001)
+* `projectId` y `createdAt` son inmutables
+* Solo se permite cambiar **status o location**, nunca ambos
+
+---
+
+### cameras/{cameraId}/operations/{operationId}
+
+```json
+{
+  "projectId": "string",
+  "type": "deploy | status_change | relocate",
+  "userId": "uid",
+  "statusAfter": "string?",
+  "location": { "lat": number, "lng": number }?,
+  "createdAt": timestamp
+}
+```
+
+* Append-only
+* No se puede editar ni borrar
+* Toda mutación de cámara genera una operación
+
+---
+
+## Estado actual
+
+* MVP funcional estabilizado
+* Un único proyecto activo (`proj_1`)
+* `projectId` definido de forma fija en el frontend (decisión deliberada)
+* Sin Context API ni store global
+* Sin soporte multi-proyecto (intencional)
+
+---
+
+## Running local
+
+```bash
+npm install
+npm run dev
+```
+
+El uso de Firebase Emulator es opcional y se controla manualmente desde `firebase.js`.
+
+---
+
+## Notas importantes
+
+Este MVP es la **base estable** del proyecto.
+El soporte multi-proyecto y el refactor arquitectónico se abordarán en fases posteriores.
