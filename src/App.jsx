@@ -1,19 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { signInWithEmailAndPassword, onAuthStateChanged } from "firebase/auth";
 import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-  doc,
-  setDoc,
-  updateDoc,
-  getDoc,
-  addDoc,
-  serverTimestamp,
-  orderBy,
-} from "firebase/firestore";
-import { auth, db } from "./firebase";
+  listenToCameras,
+  createCamera as createCameraService,
+  updateCamera,
+} from "./services/cameras.service";
+import { listenToOperations } from "./services/operations.service";
+
+import { auth } from "./firebase";
 import "leaflet/dist/leaflet.css";
 import {
   MapContainer,
@@ -253,68 +247,16 @@ function App() {
     }
   };
 
-  const updateCamera = async (cameraId, updates) => {
-    try {
-      const cameraRef = doc(db, "cameras", cameraId);
-
-      const cameraSnap = await getDoc(cameraRef);
-      if (!cameraSnap.exists()) return;
-
-      const oldCamera = cameraSnap.data();
-
-      await updateDoc(cameraRef, {
-        ...updates,
-        updatedAt: serverTimestamp(),
-      });
-
-      let type = null;
-      let extra = {};
-
-      if (updates.status && updates.status !== oldCamera.status) {
-        type = "status_change";
-        extra.statusAfter = updates.status;
-      } else if (
-        updates.location &&
-        (updates.location.lat !== oldCamera.location?.lat ||
-          updates.location.lng !== oldCamera.location?.lng)
-      ) {
-        type = "relocate";
-        extra.location = updates.location;
-      }
-
-      if (type) {
-        await createOperation(cameraId, type, extra);
-      }
-    } catch (err) {
-      console.error("Error actualizando cámara:", err);
-      alert("No se pudo guardar el cambio en la cámara.");
-    }
-  };
-
   const createCamera = async () => {
     if (!newCameraId) return;
+
     if (!/^CT_\d{3}$/.test(newCameraId)) {
       alert("Formato inválido. Usar CT_XXX (ej: CT_005)");
       return;
     }
 
     try {
-      const ref = doc(db, "cameras", newCameraId);
-
-      const newCameraData = {
-        projectId: activeProjectId,
-        status: "inactive",
-        location: { lat: null, lng: null },
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      await setDoc(ref, newCameraData);
-
-      await createOperation(newCameraId, "deploy", {
-        statusAfter: "inactive",
-      });
-
+      await createCameraService(newCameraId, activeProjectId);
       setNewCameraId("");
     } catch (err) {
       console.error("Error creando cámara:", err);
@@ -322,73 +264,18 @@ function App() {
     }
   };
 
-  const createOperation = async (cameraId, type, extra = {}) => {
-    try {
-      const ref = collection(db, "cameras", cameraId, "operations");
-
-      await addDoc(ref, {
-        projectId: activeProjectId,
-        type,
-        userId: user.uid,
-        ...extra,
-        createdAt: serverTimestamp(),
-      });
-    } catch (err) {
-      console.error("Error creando operación:", err);
-      alert("No se pudo registrar la operación.");
-    }
-  };
-
-  const listenToOperations = useCallback((cameraId) => {
-    const q = query(
-      collection(db, "cameras", cameraId, "operations"),
-      orderBy("createdAt", "desc"),
-    );
-
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        const ops = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setOperationsByCamera((prev) => ({
-          ...prev,
-          [cameraId]: ops,
-        }));
-      },
-      (error) => {
-        if (error.code === "permission-denied") {
-          console.warn("Lost access while listening operations");
-        }
-      },
-    );
-  }, []);
-
   // Camaras
   //
   useEffect(() => {
     if (authLoading) return;
     if (!user || !activeProjectId) return;
 
-    const q = query(
-      collection(db, "cameras"),
-      where("projectId", "==", activeProjectId),
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const cams = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-        setCameras(cams);
-      },
+    const unsubscribe = listenToCameras(
+      activeProjectId,
+      setCameras,
       (error) => {
         if (error.code === "permission-denied") {
-          console.warn("Lost access to project, resetting");
+          console.warn("Lost access to project");
         }
       },
     );
@@ -403,13 +290,21 @@ function App() {
     if (!user || !activeProjectId || cameras.length === 0) return;
 
     const unsubscribers = cameras.map((camera) =>
-      listenToOperations(camera.id),
+      listenToOperations(
+        camera.id,
+        (ops) =>
+          setOperationsByCamera((prev) => ({
+            ...prev,
+            [camera.id]: ops,
+          })),
+        () => {},
+      ),
     );
 
     return () => {
       unsubscribers.forEach((unsub) => unsub());
     };
-  }, [authLoading, user, cameras, activeProjectId, listenToOperations]);
+  }, [authLoading, user, cameras, activeProjectId]);
 
   useEffect(() => {
     console.log("Auth effect mounted");
