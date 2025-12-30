@@ -231,6 +231,9 @@ function App() {
   const [operationsByCamera, setOperationsByCamera] = useState({});
   const [selectedCameraId, setSelectedCameraId] = useState(null);
   const { user, activeProjectId, authLoading, login } = useAuth();
+  const handleUpdateCamera = (cameraId, updates) => {
+    return updateCamera(cameraId, activeProjectId, updates);
+  };
 
   const createCamera = async () => {
     if (!newCameraId) return;
@@ -322,7 +325,7 @@ function App() {
             cameras={cameras}
             selectedCameraId={selectedCameraId}
             onSelectCamera={setSelectedCameraId}
-            onUpdateCamera={updateCamera}
+            onUpdateCamera={handleUpdateCamera}
           />
 
           <h2>Cámaras</h2>
@@ -342,7 +345,7 @@ function App() {
                 key={camera.id + (camera.updatedAt?.seconds ?? "")}
                 camera={camera}
                 operations={operationsByCamera[camera.id] || []}
-                onUpdateCamera={updateCamera}
+                onUpdateCamera={handleUpdateCamera}
                 onSelect={() => setSelectedCameraId(camera.id)}
                 isSelected={camera.id === selectedCameraId}
               />

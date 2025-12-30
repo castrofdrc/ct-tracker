@@ -47,7 +47,7 @@ export async function createCamera(cameraId, projectId) {
   });
 }
 
-export async function updateCamera(cameraId, updates) {
+export async function updateCamera(cameraId, projectId, updates) {
   const ref = doc(db, "cameras", cameraId);
   const snap = await getDoc(ref);
 
@@ -61,7 +61,7 @@ export async function updateCamera(cameraId, updates) {
   });
 
   if (updates.status && updates.status !== prev.status) {
-    await createOperation(cameraId, prev.projectId, "status_change", {
+    await createOperation(cameraId, projectId, "status_change", {
       statusAfter: updates.status,
     });
   }
@@ -71,7 +71,7 @@ export async function updateCamera(cameraId, updates) {
     (updates.location.lat !== prev.location?.lat ||
       updates.location.lng !== prev.location?.lng)
   ) {
-    await createOperation(cameraId, prev.projectId, "relocate", {
+    await createOperation(cameraId, projectId, "relocate", {
       location: updates.location,
     });
   }
