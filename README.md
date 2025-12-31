@@ -1,4 +1,4 @@
-# CT Tracker — MVP v0.1.0
+# CT Tracker — MVP v0.2.0
 
 CT Tracker es una aplicación web para el seguimiento operativo de cámaras trampa (camera traps).
 
@@ -73,13 +73,14 @@ La aplicación es operativa, no analítica.
 
 ---
 
-## Estado actual
+## Estado actual (v0.2.0)
 
-* MVP funcional estabilizado
-* Un único proyecto activo (`proj_1`)
-* `projectId` definido de forma fija en el frontend (decisión deliberada)
-* Sin Context API ni store global
-* Sin soporte multi-proyecto (intencional)
+* MVP funcional consolidado
+* Soporte multi-proyecto mediante selector
+* Acceso a proyectos restringido por Firestore Rules (`projects.members`)
+* Arquitectura separada por capas (auth / project / services / ui)
+* Historial de operaciones append-only y auditable
+* Sin roles (decisión consciente)
 
 ---
 
@@ -94,7 +95,14 @@ El uso de Firebase Emulator es opcional y se controla manualmente desde `firebas
 
 ---
 
-## Notas importantes
+## Notas de alcance
 
-Este MVP es la **base estable** del proyecto.
-El soporte multi-proyecto y el refactor arquitectónico se abordarán en fases posteriores.
+Este release (`v0.2.0`) consolida una base estable y segura.
+
+No incluye:
+- roles (admin/editor/viewer)
+- exportación de datos
+- auditoría avanzada
+- tests automatizados
+
+Estas funcionalidades quedan explícitamente fuera de alcance en esta versión.
