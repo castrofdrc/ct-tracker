@@ -6,7 +6,7 @@ import {
   addDoc,
   serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 export function listenToOperations(cameraId, onChange, onError) {
   const q = query(
@@ -33,6 +33,7 @@ export async function createOperation(cameraId, projectId, type, extra = {}) {
   await addDoc(ref, {
     projectId,
     type,
+    userId: auth.currentUser.uid,
     ...extra,
     createdAt: serverTimestamp(),
   });
