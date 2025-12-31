@@ -5,6 +5,8 @@ export function useUI() {
   const [newCameraId, setNewCameraId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
 
   return {
     selectedCameraId,
@@ -18,5 +20,11 @@ export function useUI() {
 
     password,
     setPassword,
+
+    statusFilter,
+    setStatusFilter,
+
+    selectedProjectId,
+    setSelectedProjectId,
   };
 }
