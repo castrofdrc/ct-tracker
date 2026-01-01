@@ -1,7 +1,14 @@
 import { useContext, useState } from "react";
 import { UIContext } from "../UIContext";
 
-export function CameraItem({ camera, operations, onUpdateCamera, isSelected }) {
+export function CameraItem({
+  camera,
+  operations,
+  onUpdateCamera,
+  placeCamera,
+  removeCamera,
+  isSelected,
+}) {
   const [draftLocation, setDraftLocation] = useState(camera.location);
   const [isExpanded, setIsExpanded] = useState(false);
   const { setSelectedCameraId } = useContext(UIContext);
@@ -26,20 +33,12 @@ export function CameraItem({ camera, operations, onUpdateCamera, isSelected }) {
       >
         {camera.id}
       </strong>
-      <br />
-      Estado:
-      <select
-        value={camera.status}
-        onChange={(e) => onUpdateCamera(camera.id, { status: e.target.value })}
-      >
-        <option value="active">active</option>
-        <option value="inactive">inactive</option>
-        <option value="broken">broken</option>
-        <option value="lost">lost</option>
-      </select>
-      <button onClick={() => onUpdateCamera(camera.id, { status: "inactive" })}>
-        Dar de baja
-      </button>
+      {camera.derivedState === "inactive" && (
+        <button onClick={() => placeCamera(camera.id)}>Colocar</button>
+      )}
+      {camera.derivedState === "active" && (
+        <button onClick={() => removeCamera(camera.id)}>Retirar</button>
+      )}
       <br />
       <input
         type="number"

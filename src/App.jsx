@@ -86,7 +86,7 @@ function App() {
               <CameraMap
                 cameras={project.cameras.filter((camera) => {
                   if (ui.statusFilter === "all") return true;
-                  return camera.status === ui.statusFilter;
+                  return camera.derivedState === ui.statusFilter;
                 })}
                 onUpdateCamera={handleUpdateCamera}
               />
@@ -118,7 +118,7 @@ function App() {
                 {project.cameras
                   .filter((camera) => {
                     if (ui.statusFilter === "all") return true;
-                    return camera.status === ui.statusFilter;
+                    return camera.derivedState === ui.statusFilter;
                   })
                   .map((camera) => (
                     <CameraItem
@@ -126,6 +126,8 @@ function App() {
                       camera={camera}
                       operations={project.operationsByCamera[camera.id] || []}
                       onUpdateCamera={handleUpdateCamera}
+                      placeCamera={project.placeCamera}
+                      removeCamera={project.removeCamera}
                       isSelected={camera.id === ui.selectedCameraId}
                     />
                   ))}

@@ -60,12 +60,6 @@ export async function updateCamera(cameraId, projectId, updates) {
     updatedAt: serverTimestamp(),
   });
 
-  if (updates.status && updates.status !== prev.status) {
-    await createOperation(cameraId, projectId, "status_change", {
-      statusAfter: updates.status,
-    });
-  }
-
   if (
     updates.location &&
     (updates.location.lat !== prev.location?.lat ||
@@ -75,4 +69,12 @@ export async function updateCamera(cameraId, projectId, updates) {
       location: updates.location,
     });
   }
+}
+
+export async function placeCamera(cameraId, projectId) {
+  await createOperation(cameraId, projectId, "placement");
+}
+
+export async function removeCamera(cameraId, projectId) {
+  await createOperation(cameraId, projectId, "removal");
 }

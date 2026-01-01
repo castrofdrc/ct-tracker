@@ -38,7 +38,7 @@ export function CameraMap({ cameras, onUpdateCamera }) {
           <Popup>
             <strong>{camera.id}</strong>
             <br />
-            Estado: {camera.status}
+            Estado: {camera.derivedState}
           </Popup>
         </Marker>
       ))}
