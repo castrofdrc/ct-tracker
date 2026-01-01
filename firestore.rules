@@ -2,10 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /* =====================
-       AUTH / HELPERS
-    ====================== */
-
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -17,146 +13,43 @@ service cloud.firestore {
              .data.members;
     }
 
-    /* =====================
-       VALIDATIONS
-    ====================== */
-
-    function validCameraStatus() {
-      return request.resource.data.status in [
-        "active",
-        "inactive",
-        "broken",
-        "lost"
-      ];
-    }
-
-    function immutableCameraFieldsUnchanged() {
-      return request.resource.data.projectId == resource.data.projectId
-          && request.resource.data.createdAt == resource.data.createdAt;
-    }
-
-    function validOperationType() {
-      return request.resource.data.type in [
-        "deploy",
-        "retrieve",
-        "relocate",
-        "battery_change",
-        "memory_change",
-        "status_change"
-      ];
-    }
-
-    function statusChanged() {
-  		return request.resource.data.status != resource.data.status;
-		}
-
-		function locationChanged() {
-  		return request.resource.data.location.lat != resource.data.location.lat
-    		|| request.resource.data.location.lng != resource.data.location.lng;
-		}
-
-		function onlyStatusChanged() {
-  		return statusChanged() && !locationChanged();
-		}
-
-		function onlyLocationChanged() {
-  		return locationChanged() && !statusChanged();
-		}
-
-    /* =====================
-       OPERATION TYPES
-    ====================== */
-
-    function isDeploy(data) {
-      return data.type == "deploy"
-        && data.statusAfter == "inactive"
-        && !("location" in data);
-    }
-
-    function isStatusChange(data) {
-      return data.type == "status_change"
-        && data.statusAfter in ["active", "inactive", "broken", "lost"]
-        && !("location" in data);
-    }
-
-    function isRelocate(data) {
-      return data.type == "relocate"
-        && data.location.lat is float
-        && data.location.lng is float
-        && !("statusAfter" in data);
-    }
-
-    function isValidOperation() {
-      return request.resource.data.projectId is string
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.createdAt == request.time
-        && validOperationType()
-        && (
-          isDeploy(request.resource.data) ||
-          isStatusChange(request.resource.data) ||
-          isRelocate(request.resource.data)
-        );
-    }
-
-    /* =====================
-       PROJECTS
-    ====================== */
-
     match /projects/{projectId} {
-
-         // Permitir listar proyectos SOLO si estás autenticado
-        allow list: if request.auth != null;
-
-        // Permitir leer un proyecto puntual SOLO si sos miembro
-        allow get: if
-            request.auth != null &&
-            request.auth.uid in resource.data.members;
-
-        // Ningún write desde frontend
-        allow create, update, delete: if false;
+      allow read: if isAuthenticated();
+      allow write: if false;
     }
-
-
-    /* =====================
-       CAMERAS
-    ====================== */
 
     match /cameras/{cameraId} {
 
       allow read: if isProjectMember(resource.data.projectId);
 
-      allow create: if isProjectMember(request.resource.data.projectId)
-        && validCameraStatus()
-        && request.resource.data.createdAt == request.time;
+      allow update: if
+        isProjectMember(resource.data.projectId)
+        // campos inmutables
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.createdAt == resource.data.createdAt;
 
-      allow update: if isProjectMember(resource.data.projectId)
-  			&& immutableCameraFieldsUnchanged()
-  			&& (
-   			 (onlyStatusChanged() && validCameraStatus()) ||
-    			(onlyLocationChanged())
- 			 );
-
+      allow create: if false;
       allow delete: if false;
-
-      /* =====================
-         OPERATIONS (SUBCOLLECTION)
-      ====================== */
 
       match /operations/{operationId} {
 
-        allow read: if isProjectMember(
-          get(/databases/$(database)/documents/cameras/$(cameraId))
-            .data.projectId
-        );
+        allow read: if isAuthenticated()
+          && request.auth.uid in
+             get(
+               /databases/$(database)/documents/projects/
+               $(get(/databases/$(database)/documents/cameras/$(cameraId)).data.projectId)
+             ).data.members;
 
-        allow create: if isProjectMember(
-          get(/databases/$(database)/documents/cameras/$(cameraId))
-            .data.projectId
-        )
-        && isValidOperation();
+        allow create: if isAuthenticated()
+          && request.auth.uid in
+             get(
+               /databases/$(database)/documents/projects/
+               $(get(/databases/$(database)/documents/cameras/$(cameraId)).data.projectId)
+             ).data.members;
 
         allow update, delete: if false;
       }
+
     }
   }
 }
