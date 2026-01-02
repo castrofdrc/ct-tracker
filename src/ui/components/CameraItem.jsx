@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { UIContext } from "../UIContext";
 
 export function CameraItem({
@@ -17,6 +17,10 @@ export function CameraItem({
   const visibleOperations = isExpanded
     ? operations
     : operations.slice(0, MAX_VISIBLE);
+
+  useEffect(() => {
+    setDraftLocation(camera.location ?? { lat: null, lng: null });
+  }, [camera.location]);
 
   return (
     <li

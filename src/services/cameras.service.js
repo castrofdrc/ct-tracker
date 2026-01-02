@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { createOperation } from "./operations.service";
+import { addLocation } from "./locations.service";
 
 export function listenToCameras(projectId, onChange, onError) {
   const q = query(
@@ -37,7 +38,6 @@ export async function createCamera(cameraId, projectId) {
   await setDoc(ref, {
     projectId,
     status: "inactive",
-    location: { lat: null, lng: null },
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -56,7 +56,6 @@ export async function updateCamera(cameraId, projectId, updates) {
   const prev = snap.data();
 
   await updateDoc(ref, {
-    ...updates,
     updatedAt: serverTimestamp(),
   });
 
@@ -65,14 +64,33 @@ export async function updateCamera(cameraId, projectId, updates) {
     (updates.location.lat !== prev.location?.lat ||
       updates.location.lng !== prev.location?.lng)
   ) {
-    await createOperation(cameraId, projectId, "relocate", {
-      location: updates.location,
+    await createOperation(cameraId, projectId, "relocation");
+
+    await addLocation({
+      cameraId,
+      projectId,
+      lat: updates.location.lat,
+      lng: updates.location.lng,
+      originOperation: "relocation",
     });
   }
 }
 
 export async function placeCamera(cameraId, projectId) {
   await createOperation(cameraId, projectId, "placement");
+
+  const snap = await getDoc(doc(db, "cameras", cameraId));
+  const loc = snap.data().location;
+
+  if (loc?.lat != null && loc?.lng != null) {
+    await addLocation({
+      cameraId,
+      projectId,
+      lat: loc.lat,
+      lng: loc.lng,
+      originOperation: "placement",
+    });
+  }
 }
 
 export async function removeCamera(cameraId, projectId) {

@@ -24,11 +24,16 @@ service cloud.firestore {
 
       allow update: if
         isProjectMember(resource.data.projectId)
-        // campos inmutables
         && request.resource.data.projectId == resource.data.projectId
         && request.resource.data.createdAt == resource.data.createdAt;
 
-      allow create: if false;
+      allow create: if
+        isProjectMember(request.resource.data.projectId)
+        && (
+            request.resource.data.createdAt == request.time
+            || request.resource.data.createdAt == null
+        );
+
       allow delete: if false;
 
       match /operations/{operationId} {
@@ -47,9 +52,32 @@ service cloud.firestore {
                $(get(/databases/$(database)/documents/cameras/$(cameraId)).data.projectId)
              ).data.members;
 
+        allow update: if isProjectMember(resource.data.projectId)
+            && request.resource.data.projectId == resource.data.projectId
+                 && request.resource.data.createdAt == resource.data.createdAt
+                 && !("location" in request.resource.data);
+
         allow update, delete: if false;
       }
 
+      match /locations/{locationId} {
+
+        allow read: if isAuthenticated()
+          && request.auth.uid in
+             get(
+               /databases/$(database)/documents/projects/
+               $(get(/databases/$(database)/documents/cameras/$(cameraId)).data.projectId)
+             ).data.members;
+
+        allow create: if isAuthenticated()
+          && request.auth.uid in
+             get(
+               /databases/$(database)/documents/projects/
+               $(get(/databases/$(database)/documents/cameras/$(cameraId)).data.projectId)
+             ).data.members;
+
+        allow update, delete: if false;
+      }
     }
   }
 }

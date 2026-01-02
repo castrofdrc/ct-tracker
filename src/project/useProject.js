@@ -9,10 +9,12 @@ import {
 
 import { listenToOperations } from "../services/operations.service";
 import { deriveCameraState } from "../domain/deriveCameraState";
+import { listenToLastLocation } from "../services/locations.service";
 
 export function useProject({ projectId, authLoading, user }) {
   const [cameras, setCameras] = useState([]);
   const [operationsByCamera, setOperationsByCamera] = useState({});
+  const [lastLocationsByCamera, setLastLocationsByCamera] = useState({});
 
   useEffect(() => {
     // Reset explícito de estado al cambiar de proyecto
@@ -57,6 +59,26 @@ export function useProject({ projectId, authLoading, user }) {
     };
   }, [authLoading, user, projectId, cameras]);
 
+  // Ubicaciones
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user || !projectId || cameras.length === 0) return;
+
+    const unsubs = cameras.map((camera) =>
+      listenToLastLocation(
+        camera.id,
+        (loc) =>
+          setLastLocationsByCamera((prev) => ({
+            ...prev,
+            [camera.id]: loc, // puede ser null
+          })),
+        () => {},
+      ),
+    );
+
+    return () => unsubs.forEach((u) => u());
+  }, [authLoading, user, projectId, cameras]);
+
   const createCameraForProject = (cameraId) => {
     return createCamera(cameraId, projectId);
   };
@@ -76,10 +98,12 @@ export function useProject({ projectId, authLoading, user }) {
   const camerasWithDerivedState = cameras.map((camera) => {
     const ops = operationsByCamera[camera.id] || [];
     const derivedState = deriveCameraState(ops);
+    const location = lastLocationsByCamera[camera.id] ?? null;
 
     return {
       ...camera,
       derivedState,
+      location,
     };
   });
 
