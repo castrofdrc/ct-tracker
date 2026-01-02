@@ -1,399 +1,225 @@
-# CT Tracker — MVP v0.2.0
+# CT-Tracker
 
-CT Tracker es una aplicación web para el seguimiento operativo de cámaras trampa (camera traps).
+CT-Tracker es una aplicación web para el seguimiento operativo y espacial de cámaras trampa (camera traps) utilizadas en proyectos de monitoreo de campo.
 
-## Objetivo
+El foco del sistema no es solo visual, sino registrar de forma auditable y consistente:
+- qué pasó con cada cámara,
+- cuándo pasó,
+- y dónde pasó.
 
-Gestionar cámaras físicas identificadas de forma única, registrar cambios de estado y ubicación, mantener un historial auditable de operaciones y visualizar cámaras georreferenciadas en un mapa.
-
-La aplicación es operativa, no analítica.
-
----
-
-## Stack
-
-* React + Vite
-* Firebase Auth
-* Firestore
-* React-Leaflet
-* Firebase Hosting
+La arquitectura está diseñada para evitar ambigüedades de dominio, facilitar análisis posteriores y habilitar exportaciones limpias.
 
 ---
 
-## Modelo de datos
+## Objetivos del sistema
 
-### projects/{projectId}
-
-```json
-{
-  "members": ["uid", "..."]
-}
-```
-
-* Define el límite de seguridad
-* El frontend **no crea ni modifica proyectos**
-* Todo acceso depende de la pertenencia al proyecto
-
----
-
-### cameras/{cameraId}
-
-```json
-{
-  "projectId": "string",
-  "status": "active | inactive | broken | lost",
-  "location": { "lat": number | null, "lng": number | null },
-  "createdAt": timestamp,
-  "updatedAt": timestamp
-}
-```
-
-* `cameraId` es semántico (ej: CT_001)
-* `projectId` y `createdAt` son inmutables
-* Solo se permite cambiar **status o location**, nunca ambos
+- Registrar el ciclo de vida completo de cada cámara.
+- Separar explícitamente:
+  - Estado (derivado, no persistido)
+  - Operaciones (eventos)
+  - Ubicaciones (historial espacial)
+- Garantizar:
+  - trazabilidad,
+  - auditoría,
+  - consistencia temporal y semántica.
+- Preparar la base para:
+  - exportaciones CSV,
+  - análisis temporal,
+  - análisis espacial (GIS).
 
 ---
 
-### cameras/{cameraId}/operations/{operationId}
+## Principios de diseño
 
-```json
-{
-  "projectId": "string",
-  "type": "deploy | status_change | relocate",
-  "userId": "uid",
-  "statusAfter": "string?",
-  "location": { "lat": number, "lng": number }?,
-  "createdAt": timestamp
-}
-```
+- El estado no es un evento
+- El estado no se persiste
+- Los eventos son inmutables
+- La ubicación es un historial independiente
+- Firestore es la fuente de verdad
+- La UI deriva, no decide
 
-* Append-only
-* No se puede editar ni borrar
-* Toda mutación de cámara genera una operación
+Estos principios no deben romperse.
 
 ---
 
-## Estado actual (v0.2.0)
+## Arquitectura general
 
-* MVP funcional consolidado
-* Soporte multi-proyecto mediante selector
-* Acceso a proyectos restringido por Firestore Rules (`projects.members`)
-* Arquitectura separada por capas (auth / project / services / ui)
-* Historial de operaciones append-only y auditable
-* Sin roles (decisión consciente)
+- Frontend: React (Vite)
+- Backend: Firebase
+  - Authentication
+  - Firestore
+  - Firestore Rules estrictas
+- Hosting: Firebase Hosting
+- Mapa: Leaflet / React-Leaflet
 
----
-
-## Running local
-
-```bash
-npm install
-npm run dev
-```
-
-El uso de Firebase Emulator es opcional y se controla manualmente desde `firebase.js`.
+Arquitectura SPA, sin stores globales innecesarios.
 
 ---
 
-## Notas de alcance
+## Modelo de dominio
 
-Este release (`v0.2.0`) consolida una base estable y segura.
+### Project
 
-No incluye:
-- roles (admin/editor/viewer)
-- exportación de datos
-- auditoría avanzada
-- tests automatizados
+projects/{projectId}
 
-Estas funcionalidades quedan explícitamente fuera de alcance en esta versión.
+- Agrupa cámaras.
+- Define membresía (members: [uid]).
+- Controla acceso vía Firestore Rules.
 
 ---
 
-# Checklist de testing formal (CT-Tracker)
+### Camera
 
-👉 **Objetivo**
-Definir un procedimiento **determinístico** para validar que la app funciona **antes y después** de cualquier cambio.
+cameras/{cameraId}
 
-👉 **Formato recomendado**
-Agregar una nueva sección al final del `README.md` (o crear `docs/testing-checklist.md` si preferís separar; recomiendo README por ahora).
+Representa una cámara física.
 
----
+Campos relevantes:
+- projectId
+- createdAt
+- updatedAt
 
-## 1. Entorno de prueba
+No tiene estado persistido.  
+No tiene ubicación persistida.
 
-**Precondiciones obligatorias**
-
-* Branch: `main`
-* Tag base: `v0.2.0` o superior
-* `USE_EMULATOR = false`
-* Usuario autenticado con:
-
-  * acceso a ≥ 1 proyecto
-  * permisos reales en Firestore
-* Proyecto con:
-
-  * ≥ 1 cámara
-  * ≥ 1 cámara con ubicación
-  * historial existente
-
-Si alguna precondición no se cumple → **el test no es válido**.
+La cámara no contiene historial.
 
 ---
 
-## 2. Auth
+### Operation (historial operativo)
 
-### 2.1 Login válido
+cameras/{cameraId}/operations/{operationId}
 
-**Pasos**
+Representa un evento ocurrido.
 
-1. Abrir la app
-2. Ingresar email válido
-3. Ingresar password válido
-4. Click en “Login”
+Tipos válidos:
+- deploy: alta en el sistema
+- placement: colocación en campo
+- relocation: cambio de ubicación
+- maintenance: mantenimiento sin retiro
+- removal: retiro del campo
 
-**Resultado esperado**
+Campos:
+- cameraId
+- projectId
+- type
+- userId
+- createdAt
 
-* No errores en consola
-* Se renderiza el selector de proyecto
-
----
-
-### 2.2 Login inválido
-
-**Pasos**
-
-1. Email válido
-2. Password incorrecto
-3. Click en “Login”
-
-**Resultado esperado**
-
-* Login falla
-* La app no se rompe
-* No acceso a proyectos
+Características:
+- Inmutable
+- Sin estado
+- Sin ubicación
 
 ---
 
-## 3. Selector de proyecto
+### LocationHistory (historial espacial)
 
-### 3.1 Usuario con proyectos
+cameras/{cameraId}/locations/{locationId}
 
-**Pasos**
+Entidad independiente para trazabilidad espacial.
 
-1. Usuario autenticado
-2. Esperar carga
+Campos:
+- cameraId
+- projectId
+- lat
+- lng
+- originOperation (placement | relocation)
+- createdAt
 
-**Resultado esperado**
+Solo se escribe en:
+- placement
+- relocation
 
-* Lista de proyectos visibles
-* Cada botón corresponde a un `projectId` real
-
----
-
-### 3.2 Selección de proyecto
-
-**Pasos**
-
-1. Click en un proyecto
-
-**Resultado esperado**
-
-* `selectedProjectId` se setea
-* Se renderiza mapa + lista de cámaras
-* No quedan datos de proyectos previos
+Es la única fuente de verdad para el mapa.
 
 ---
 
-### 3.3 Usuario sin proyectos
+## Modelo de estados
 
-**Pasos**
+Estados válidos:
+- active
+- inactive
 
-1. Login con usuario sin membresías
+El estado es derivado, nunca persistido.
 
-**Resultado esperado**
+Derivación del estado actual según la última operación válida:
 
-* Mensaje: “No tenés acceso a ningún proyecto”
-* No crashes
-* No accesos parciales
+- deploy → inactive
+- placement → active
+- relocation → active
+- maintenance → active
+- removal → inactive
 
----
-
-## 4. Cámaras
-
-### 4.1 Listado
-
-**Resultado esperado**
-
-* Lista coincide con Firestore
-* Estados correctos
-* IDs semánticos (`CT_XXX`)
+Implementado en:
+src/domain/deriveCameraState.js
 
 ---
 
-### 4.2 Crear cámara (válido)
+## Flujo funcional
 
-**Pasos**
-
-1. Ingresar `CT_999`
-2. Click “Crear cámara”
-
-**Resultado esperado**
-
-* Cámara aparece en lista
-* Estado inicial: `inactive`
-* Operación `deploy` creada
+1. Login con Firebase Auth
+2. Selección de proyecto según membresía
+3. Listado de cámaras
+4. Estado mostrado = derivedState
+5. Historial operativo visible
+6. Mapa usando historial de ubicaciones
+7. Acciones del usuario generan operaciones (no estados)
 
 ---
 
-### 4.3 Crear cámara (inválido)
+## Seguridad (Firestore Rules)
 
-**Pasos**
-
-1. Ingresar `CT_9`
-2. Click “Crear cámara”
-
-**Resultado esperado**
-
-* Alerta de formato inválido
-* No se escribe en Firestore
+- Acceso restringido por proyecto
+- Escrituras estrictas:
+  - operaciones sin campos extra
+  - ubicaciones separadas
+- No se permiten updates de historial
+- Reglas alineadas con el dominio
 
 ---
 
-## 5. Cambio de estado
+## Estado actual del proyecto
 
-### 5.1 Cambio válido
-
-**Pasos**
-
-1. Seleccionar cámara
-2. Cambiar estado (`active → broken`)
-
-**Resultado esperado**
-
-* Estado se actualiza
-* Nueva operación `status_change`
-* `statusAfter` correcto
-* Sin errores en consola
+- Dominio rediseñado y consolidado
+- Historial espacial separado
+- Legacy eliminado (camera.location)
+- App estable en:
+  - local (npm run dev)
+  - producción (Firebase Hosting)
+- Sin errores de permisos
+- Warning de React en desarrollo (StrictMode) aceptado y documentado
 
 ---
 
-### 5.2 Cambio redundante
+## Próximos pasos
 
-**Pasos**
+Prioridad alta:
+- Exportaciones:
+  - operaciones
+  - ubicaciones
+  - cámaras
 
-1. Cambiar al mismo estado actual
+Prioridad media:
+- Limpieza final de legacy (status_change, tipos antiguos)
+- Endurecimiento adicional de rules
 
-**Resultado esperado**
-
-* No se crea operación nueva
-* Estado no se duplica
-
----
-
-## 6. Relocalización
-
-### 6.1 Desde mapa
-
-**Pasos**
-
-1. Seleccionar cámara
-2. Click en mapa
-
-**Resultado esperado**
-
-* Coordenadas se actualizan
-* Operación `relocate` creada
-* Historial actualizado
+Prioridad baja:
+- Documentación extendida
+- Diagramas de dominio
+- Tests de dominio puros
 
 ---
 
-### 6.2 Cámara sin selección
+## Notas importantes para desarrollo futuro
 
-**Pasos**
-
-1. Click en mapa sin cámara seleccionada
-
-**Resultado esperado**
-
-* No pasa nada
-* No errores
+- No persistir estado
+- No mezclar ubicación con operaciones
+- No agregar atajos en la UI
+- Todo cambio debe respetar el dominio
 
 ---
 
-## 7. Historial
+## Licencia
 
-### 7.1 Orden
-
-**Resultado esperado**
-
-* Orden descendente por `createdAt`
-* Última operación arriba
-
----
-
-### 7.2 Expansión
-
-**Pasos**
-
-1. Cámara con >3 operaciones
-2. Click “Ver más”
-
-**Resultado esperado**
-
-* Se muestran todas
-* Toggle funciona
-
----
-
-## 8. Seguridad (backend)
-
-### 8.1 Proyecto ajeno
-
-**Pasos**
-
-1. Forzar `projectId` manualmente (DevTools)
-
-**Resultado esperado**
-
-* Permission denied
-* No datos visibles
-* App no se rompe
-
----
-
-### 8.2 Escrituras no permitidas
-
-**Resultado esperado**
-
-* Delete cámara → bloqueado
-* Update múltiple (`status + location`) → bloqueado
-
----
-
-## 9. Producción (Hosting)
-
-### 9.1 Smoke test
-
-Repetir:
-
-* login
-* selector
-* cambio de estado
-* relocalización
-
-**Resultado esperado**
-
-* Igual que local
-* Sin errores críticos
-
----
-
-## 10. Criterio de aprobación
-
-El sistema **aprueba** si:
-
-* Todos los resultados esperados se cumplen
-* No hay errores persistentes en consola
-* Firestore refleja exactamente lo esperado
-
----
+Pendiente de definir.

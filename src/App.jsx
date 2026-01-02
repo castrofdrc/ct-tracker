@@ -100,10 +100,8 @@ function App() {
                   onChange={(e) => ui.setStatusFilter(e.target.value)}
                 >
                   <option value="all">Todas</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                  <option value="broken">Broken</option>
-                  <option value="lost">Lost</option>
+                  <option value="active">Activas</option>
+                  <option value="inactive">Inactivas</option>
                 </select>
               </label>
 
