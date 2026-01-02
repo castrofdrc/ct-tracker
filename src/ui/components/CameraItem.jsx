@@ -1,15 +1,14 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { UIContext } from "../UIContext";
 
 export function CameraItem({
   camera,
   operations,
-  onUpdateCamera,
+  usersById,
   placeCamera,
   removeCamera,
   isSelected,
 }) {
-  const [draftLocation, setDraftLocation] = useState(camera.location);
   const [isExpanded, setIsExpanded] = useState(false);
   const { setSelectedCameraId } = useContext(UIContext);
 
@@ -17,10 +16,6 @@ export function CameraItem({
   const visibleOperations = isExpanded
     ? operations
     : operations.slice(0, MAX_VISIBLE);
-
-  useEffect(() => {
-    setDraftLocation(camera.location ?? { lat: null, lng: null });
-  }, [camera.location]);
 
   return (
     <li
@@ -44,37 +39,6 @@ export function CameraItem({
         <button onClick={() => removeCamera(camera.id)}>Retirar</button>
       )}
       <br />
-      <input
-        type="number"
-        step="any"
-        value={draftLocation?.lat ?? ""}
-        onChange={(e) =>
-          setDraftLocation({
-            ...draftLocation,
-            lat: e.target.value === "" ? null : Number(e.target.value),
-          })
-        }
-      />
-      <input
-        type="number"
-        step="any"
-        value={draftLocation?.lng ?? ""}
-        onChange={(e) =>
-          setDraftLocation({
-            ...draftLocation,
-            lng: e.target.value === "" ? null : Number(e.target.value),
-          })
-        }
-      />
-      <button
-        onClick={() =>
-          onUpdateCamera(camera.id, {
-            location: draftLocation,
-          })
-        }
-      >
-        Guardar ubicación
-      </button>
       <h4>Historial</h4>
       <ul>
         {visibleOperations.map((op) => (
@@ -82,11 +46,11 @@ export function CameraItem({
             <strong>{op.type}</strong> —{" "}
             {op.createdAt?.toDate().toLocaleString() || "…"}
             {op.statusAfter && <> — status: {op.statusAfter}</>}
-            {op.location && (
-              <>
-                {" "}
-                — loc: {op.location.lat}, {op.location.lng}
-              </>
+            {op.type === "maintenance" && op.maintenanceType && (
+              <> — maintenanceType: {op.maintenanceType}</>
+            )}
+            {op.userId && usersById?.[op.userId]?.displayName && (
+              <> — por {usersById[op.userId].displayName}</>
             )}
           </li>
         ))}

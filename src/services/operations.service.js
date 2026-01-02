@@ -38,3 +38,13 @@ export async function createOperation(cameraId, projectId, type, extra = {}) {
     createdAt: serverTimestamp(),
   });
 }
+
+export async function createMaintenance(cameraId, projectId, maintenanceType) {
+  if (!["battery", "sd", "both"].includes(maintenanceType)) {
+    throw new Error("maintenanceType inválido");
+  }
+
+  return createOperation(cameraId, projectId, "maintenance", {
+    maintenanceType,
+  });
+}

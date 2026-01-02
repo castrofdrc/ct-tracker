@@ -13,6 +13,14 @@ service cloud.firestore {
              .data.members;
     }
 
+    match /users/{userId} {
+      // Cada usuario puede leer SU propio perfil
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Escritura solo desde backend/admin (por ahora nadie)
+      allow write: if false;
+    }
+
     match /projects/{projectId} {
       allow read: if isAuthenticated();
       allow write: if false;

@@ -2,19 +2,14 @@ import { useContext } from "react";
 import { useMapEvents } from "react-leaflet";
 import { UIContext } from "../UIContext";
 
-export function MapClickHandler({ onSetLocation }) {
+export function MapClickHandler({ onRelocate }) {
   const { selectedCameraId } = useContext(UIContext);
 
   useMapEvents({
     click(e) {
       if (!selectedCameraId) return;
 
-      onSetLocation(selectedCameraId, {
-        location: {
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
-        },
-      });
+      onRelocate(selectedCameraId, e.latlng.lat, e.latlng.lng);
     },
   });
 

@@ -6,6 +6,8 @@ import { useUI } from "./ui/useUI";
 import { CameraMap } from "./ui/components/CameraMap";
 import { CameraItem } from "./ui/components/CameraItem";
 import { ProjectSelector } from "./ui/components/ProjectSelector";
+import { CameraRelocationPanel } from "./ui/components/CameraRelocationPanel";
+import { CameraMaintenancePanel } from "./ui/components/CameraMaintenancePanel";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -28,10 +30,6 @@ function App() {
     user,
     authLoading,
   });
-
-  const handleUpdateCamera = (cameraId, updates) => {
-    return project.updateCamera(cameraId, updates);
-  };
 
   const handleCreateCamera = async () => {
     if (!ui.newCameraId) return;
@@ -88,8 +86,11 @@ function App() {
                   if (ui.statusFilter === "all") return true;
                   return camera.derivedState === ui.statusFilter;
                 })}
-                onUpdateCamera={handleUpdateCamera}
+                onRelocate={project.relocateCamera}
               />
+
+              <CameraRelocationPanel />
+              <CameraMaintenancePanel />
 
               <h2>Cámaras</h2>
 
@@ -123,7 +124,7 @@ function App() {
                       key={camera.id}
                       camera={camera}
                       operations={project.operationsByCamera[camera.id] || []}
-                      onUpdateCamera={handleUpdateCamera}
+                      usersById={project.usersById}
                       placeCamera={project.placeCamera}
                       removeCamera={project.removeCamera}
                       isSelected={camera.id === ui.selectedCameraId}

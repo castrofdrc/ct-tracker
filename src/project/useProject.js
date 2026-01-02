@@ -2,19 +2,21 @@ import { useEffect, useState } from "react";
 import {
   listenToCameras,
   createCamera,
-  updateCamera,
   placeCamera,
   removeCamera,
+  relocateCamera,
 } from "../services/cameras.service";
-
 import { listenToOperations } from "../services/operations.service";
 import { deriveCameraState } from "../domain/deriveCameraState";
 import { listenToLastLocation } from "../services/locations.service";
+import { createMaintenance } from "../services/operations.service";
+import { listenToUser } from "../services/users.service";
 
 export function useProject({ projectId, authLoading, user }) {
   const [cameras, setCameras] = useState([]);
   const [operationsByCamera, setOperationsByCamera] = useState({});
   const [lastLocationsByCamera, setLastLocationsByCamera] = useState({});
+  const [usersById, setUsersById] = useState({});
 
   useEffect(() => {
     // Reset explícito de estado al cambiar de proyecto
@@ -59,6 +61,38 @@ export function useProject({ projectId, authLoading, user }) {
     };
   }, [authLoading, user, projectId, cameras]);
 
+  // Usuarios
+  useEffect(() => {
+    if (!projectId) return;
+
+    const userIds = new Set();
+
+    Object.values(operationsByCamera).forEach((ops) => {
+      ops.forEach((op) => {
+        if (op.userId) userIds.add(op.userId);
+      });
+    });
+
+    userIds.forEach((uid) => {
+      // ya tenemos el usuario cacheado → no hacemos nada
+      if (usersById[uid]) return;
+
+      listenToUser(
+        uid,
+        (user) => {
+          setUsersById((prev) => {
+            // evitar re-render inútil
+            if (prev[uid]) return prev;
+            return { ...prev, [uid]: user };
+          });
+        },
+        (err) => {
+          console.error("Error escuchando usuario", uid, err);
+        },
+      );
+    });
+  }, [operationsByCamera, projectId]); // ⬅️ usersById NO VA ACÁ
+
   // Ubicaciones
   useEffect(() => {
     if (authLoading) return;
@@ -83,12 +117,16 @@ export function useProject({ projectId, authLoading, user }) {
     return createCamera(cameraId, projectId);
   };
 
-  const updateCameraForProject = (cameraId, updates) => {
-    return updateCamera(cameraId, projectId, updates);
-  };
-
   const placeCameraForProject = (cameraId) => {
     return placeCamera(cameraId, projectId);
+  };
+
+  const relocateCameraForProject = (cameraId, lat, lng) => {
+    return relocateCamera(cameraId, projectId, lat, lng);
+  };
+
+  const maintenanceCameraForProject = (cameraId, maintenanceType) => {
+    return createMaintenance(cameraId, projectId, maintenanceType);
   };
 
   const removeCameraForProject = (cameraId) => {
@@ -110,9 +148,11 @@ export function useProject({ projectId, authLoading, user }) {
   return {
     cameras: camerasWithDerivedState,
     operationsByCamera,
+    usersById,
     createCamera: createCameraForProject,
-    updateCamera: updateCameraForProject, // solo para ubicación (temporal)
     placeCamera: placeCameraForProject,
+    relocateCamera: relocateCameraForProject,
+    maintenanceCamera: maintenanceCameraForProject,
     removeCamera: removeCameraForProject,
   };
 }

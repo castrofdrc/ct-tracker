@@ -4,7 +4,7 @@ import { UIContext } from "../UIContext";
 import { FitBounds } from "./FitBounds";
 import { MapClickHandler } from "./MapClickHandler";
 
-export function CameraMap({ cameras, onUpdateCamera }) {
+export function CameraMap({ cameras, onRelocate }) {
   const { setSelectedCameraId } = useContext(UIContext);
 
   const camerasWithLocation = cameras.filter(
@@ -25,7 +25,7 @@ export function CameraMap({ cameras, onUpdateCamera }) {
       />
 
       <FitBounds cameras={camerasWithLocation} />
-      <MapClickHandler onSetLocation={onUpdateCamera} />
+      <MapClickHandler onRelocate={onRelocate} />
 
       {camerasWithLocation.map((camera) => (
         <Marker

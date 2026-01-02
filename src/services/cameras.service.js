@@ -5,7 +5,6 @@ import {
   onSnapshot,
   doc,
   setDoc,
-  updateDoc,
   getDoc,
   serverTimestamp,
 } from "firebase/firestore";
@@ -47,33 +46,16 @@ export async function createCamera(cameraId, projectId) {
   });
 }
 
-export async function updateCamera(cameraId, projectId, updates) {
-  const ref = doc(db, "cameras", cameraId);
-  const snap = await getDoc(ref);
+export async function relocateCamera(cameraId, projectId, lat, lng) {
+  await createOperation(cameraId, projectId, "relocation");
 
-  if (!snap.exists()) return;
-
-  const prev = snap.data();
-
-  await updateDoc(ref, {
-    updatedAt: serverTimestamp(),
+  await addLocation({
+    cameraId,
+    projectId,
+    lat,
+    lng,
+    originOperation: "relocation",
   });
-
-  if (
-    updates.location &&
-    (updates.location.lat !== prev.location?.lat ||
-      updates.location.lng !== prev.location?.lng)
-  ) {
-    await createOperation(cameraId, projectId, "relocation");
-
-    await addLocation({
-      cameraId,
-      projectId,
-      lat: updates.location.lat,
-      lng: updates.location.lng,
-      originOperation: "relocation",
-    });
-  }
 }
 
 export async function placeCamera(cameraId, projectId) {
