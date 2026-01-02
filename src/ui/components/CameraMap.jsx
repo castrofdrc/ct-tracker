@@ -3,28 +3,44 @@ import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { UIContext } from "../UIContext";
 import { FitBounds } from "./FitBounds";
 import { MapClickHandler } from "./MapClickHandler";
+import { CenterOnCamera } from "./CenterOnCamera";
+
+const DEFAULT_CENTER = [-34.6, -58.4];
+const DEFAULT_ZOOM = 6;
 
 export function CameraMap({ cameras, onRelocate }) {
-  const { setSelectedCameraId } = useContext(UIContext);
+  const { setSelectedCameraId, selectedCameraId } = useContext(UIContext);
+
+  const selectedCamera = cameras.find((c) => c.id === selectedCameraId);
 
   const camerasWithLocation = cameras.filter(
     (c) =>
-      typeof c.location?.lat === "number" &&
-      typeof c.location?.lng === "number",
+      c.location &&
+      Number.isFinite(c.location.lat) &&
+      Number.isFinite(c.location.lng),
   );
 
-  if (camerasWithLocation.length === 0) {
-    return <p>No hay cámaras con ubicación</p>;
-  }
-
   return (
-    <MapContainer style={{ height: "400px", width: "100%" }}>
+    <MapContainer
+      center={DEFAULT_CENTER}
+      zoom={DEFAULT_ZOOM}
+      style={{ height: "400px", width: "100%" }}
+    >
       <TileLayer
         attribution="&copy; OpenStreetMap contributors"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
-      <FitBounds cameras={camerasWithLocation} />
+      {camerasWithLocation.length > 1 && (
+        <FitBounds cameras={camerasWithLocation} />
+      )}
+
+      {selectedCamera &&
+        selectedCamera.location &&
+        camerasWithLocation.length <= 1 && (
+          <CenterOnCamera camera={selectedCamera} />
+        )}
+
       <MapClickHandler onRelocate={onRelocate} />
 
       {camerasWithLocation.map((camera) => (
