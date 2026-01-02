@@ -15,6 +15,7 @@ export function CameraMap({ cameras, onRelocate }) {
 
   const camerasWithLocation = cameras.filter(
     (c) =>
+      c.derivedState === "active" &&
       c.location &&
       Number.isFinite(c.location.lat) &&
       Number.isFinite(c.location.lng),

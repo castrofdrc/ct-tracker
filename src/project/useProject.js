@@ -6,17 +6,23 @@ import {
   removeCamera,
   relocateCamera,
 } from "../services/cameras.service";
-import { listenToOperations } from "../services/operations.service";
-import { deriveCameraState } from "../domain/deriveCameraState";
-import { listenToLastLocation } from "../services/locations.service";
-import { createMaintenance } from "../services/operations.service";
+import {
+  listenToOperations,
+  createMaintenance,
+} from "../services/operations.service";
+import {
+  listenToLastLocation,
+  listenToLocations,
+} from "../services/locations.service";
 import { listenToUser } from "../services/users.service";
+import { deriveCameraState } from "../domain/deriveCameraState";
 
 export function useProject({ projectId, authLoading, user }) {
   const [cameras, setCameras] = useState([]);
   const [operationsByCamera, setOperationsByCamera] = useState({});
   const [lastLocationsByCamera, setLastLocationsByCamera] = useState({});
   const [usersById, setUsersById] = useState({});
+  const [locationsByCamera, setLocationsByCamera] = useState({});
 
   useEffect(() => {
     // Reset explícito de estado al cambiar de proyecto
@@ -113,6 +119,26 @@ export function useProject({ projectId, authLoading, user }) {
     return () => unsubs.forEach((u) => u());
   }, [authLoading, user, projectId, cameras]);
 
+  // Historial de ubicaciones
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user || !projectId || cameras.length === 0) return;
+
+    const unsubs = cameras.map((camera) =>
+      listenToLocations(
+        camera.id,
+        (locs) =>
+          setLocationsByCamera((prev) => ({
+            ...prev,
+            [camera.id]: locs,
+          })),
+        () => {},
+      ),
+    );
+
+    return () => unsubs.forEach((u) => u());
+  }, [authLoading, user, projectId, cameras]);
+
   const createCameraForProject = (cameraId) => {
     return createCamera(cameraId, projectId);
   };
@@ -148,6 +174,7 @@ export function useProject({ projectId, authLoading, user }) {
   return {
     cameras: camerasWithDerivedState,
     operationsByCamera,
+    locationsByCamera,
     usersById,
     createCamera: createCameraForProject,
     placeCamera: placeCameraForProject,

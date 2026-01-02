@@ -59,3 +59,22 @@ export function listenToLastLocation(cameraId, onChange, onError) {
     onError,
   );
 }
+
+export function listenToLocations(cameraId, onChange, onError) {
+  const q = query(
+    collection(db, "cameras", cameraId, "locations"),
+    orderBy("createdAt", "desc"),
+  );
+
+  return onSnapshot(
+    q,
+    (snap) => {
+      const locations = snap.docs.map((d) => ({
+        id: d.id,
+        ...d.data(),
+      }));
+      onChange(locations);
+    },
+    onError,
+  );
+}

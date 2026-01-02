@@ -4,18 +4,25 @@ import { UIContext } from "../UIContext";
 export function CameraItem({
   camera,
   operations,
+  locations,
   usersById,
   placeCamera,
   removeCamera,
   isSelected,
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpandedOps, setIsExpandedOps] = useState(false);
+  const [isExpandedLocations, setIsExpandedLocations] = useState(false);
   const { setSelectedCameraId } = useContext(UIContext);
 
   const MAX_VISIBLE = 3;
-  const visibleOperations = isExpanded
+
+  const visibleOperations = isExpandedOps
     ? operations
     : operations.slice(0, MAX_VISIBLE);
+
+  const visibleLocations = isExpandedLocations
+    ? locations
+    : locations.slice(0, MAX_VISIBLE);
 
   return (
     <li
@@ -39,7 +46,8 @@ export function CameraItem({
         <button onClick={() => removeCamera(camera.id)}>Retirar</button>
       )}
       <br />
-      <h4>Historial</h4>
+
+      <h4>Historial de operaciones</h4>
       <ul>
         {visibleOperations.map((op) => (
           <li key={op.id}>
@@ -56,9 +64,37 @@ export function CameraItem({
         ))}
       </ul>
       {operations.length > MAX_VISIBLE && (
-        <button onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? "Ver menos" : "Ver más"}
+        <button onClick={() => setIsExpandedOps(!isExpandedOps)}>
+          {isExpandedOps ? "Ver menos" : "Ver más"}
         </button>
+      )}
+
+      <h4>Historial de ubicaciones</h4>
+
+      {(!locations || locations.length === 0) && (
+        <p>Sin ubicaciones registradas.</p>
+      )}
+
+      {locations && locations.length > 0 && (
+        <>
+          <ul>
+            {visibleLocations.map((loc) => (
+              <li key={loc.id}>
+                {loc.createdAt?.toDate().toLocaleString() || "…"}
+                {" — "}
+                lat: {loc.lat}, lng: {loc.lng}
+              </li>
+            ))}
+          </ul>
+
+          {locations.length > MAX_VISIBLE && (
+            <button
+              onClick={() => setIsExpandedLocations(!isExpandedLocations)}
+            >
+              {isExpandedLocations ? "Ver menos" : "Ver más"}
+            </button>
+          )}
+        </>
       )}
     </li>
   );

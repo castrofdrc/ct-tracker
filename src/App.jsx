@@ -133,6 +133,7 @@ function App() {
                       key={camera.id}
                       camera={camera}
                       operations={project.operationsByCamera[camera.id] || []}
+                      locations={project.locationsByCamera?.[camera.id] || []}
                       usersById={project.usersById}
                       placeCamera={project.placeCamera}
                       removeCamera={project.removeCamera}
