@@ -24,7 +24,7 @@ L.Icon.Default.mergeOptions({
 
 function App() {
   const ui = useUI();
-  const { user, authLoading, login } = useAuth();
+  const { user, authLoading, login, logout } = useAuth();
   const project = useProject({
     projectId: ui.selectedProjectId,
     user,
@@ -78,6 +78,15 @@ function App() {
 
           {user && ui.selectedProjectId && (
             <>
+              <button
+                onClick={async () => {
+                  ui.resetSession();
+                  await logout();
+                }}
+              >
+                Logout
+              </button>
+
               <p>Proyecto activo: {ui.selectedProjectId}</p>
 
               <h2>Mapa de cámaras</h2>

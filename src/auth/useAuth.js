@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+} from "firebase/auth";
 import { auth } from "../firebase";
 
 export function useAuth() {
@@ -23,9 +27,14 @@ export function useAuth() {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
+  const logout = async () => {
+    await signOut(auth);
+  };
+
   return {
     user,
     authLoading,
     login,
+    logout,
   };
 }
