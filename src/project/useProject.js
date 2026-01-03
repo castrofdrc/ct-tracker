@@ -149,11 +149,13 @@ export function useProject({ projectId, authLoading, user }) {
   };
 
   const relocateCameraForProject = (cameraId, lat, lng) => {
-    return relocateCamera(cameraId, projectId, lat, lng);
+    const ops = operationsByCamera[cameraId] || [];
+    return relocateCamera(cameraId, projectId, lat, lng, ops);
   };
 
   const maintenanceCameraForProject = (cameraId, maintenanceType) => {
-    return createMaintenance(cameraId, projectId, maintenanceType);
+    const ops = operationsByCamera[cameraId] || [];
+    return createMaintenance(cameraId, projectId, maintenanceType, ops);
   };
 
   const removeCameraForProject = (cameraId) => {

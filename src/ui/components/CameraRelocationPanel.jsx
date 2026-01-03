@@ -26,7 +26,11 @@ export function CameraRelocationPanel() {
       return;
     }
 
-    project.relocateCamera(selectedCameraId, latNum, lngNum);
+    try {
+      project.relocateCamera(selectedCameraId, latNum, lngNum);
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (

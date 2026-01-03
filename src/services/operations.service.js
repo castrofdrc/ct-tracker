@@ -7,6 +7,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
+import { assertCameraIsActive } from "../domain/operationGuards";
 
 export function listenToOperations(cameraId, onChange, onError) {
   const q = query(
@@ -39,10 +40,17 @@ export async function createOperation(cameraId, projectId, type, extra = {}) {
   });
 }
 
-export async function createMaintenance(cameraId, projectId, maintenanceType) {
+export async function createMaintenance(
+  cameraId,
+  projectId,
+  maintenanceType,
+  operations = [],
+) {
   if (!["battery", "sd", "both"].includes(maintenanceType)) {
     throw new Error("maintenanceType inválido");
   }
+
+  assertCameraIsActive(operations);
 
   return createOperation(cameraId, projectId, "maintenance", {
     maintenanceType,

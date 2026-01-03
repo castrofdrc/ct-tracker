@@ -14,6 +14,7 @@ import {
 import { db } from "../firebase";
 import { createOperation } from "./operations.service";
 import { addLocation } from "./locations.service";
+import { assertHasBeenPlaced } from "../domain/operationGuards";
 
 export function listenToCameras(projectId, onChange, onError) {
   const q = query(
@@ -49,7 +50,15 @@ export async function createCamera(cameraId, projectId) {
   });
 }
 
-export async function relocateCamera(cameraId, projectId, lat, lng) {
+export async function relocateCamera(
+  cameraId,
+  projectId,
+  lat,
+  lng,
+  operations = [],
+) {
+  assertHasBeenPlaced(operations);
+
   await createOperation(cameraId, projectId, "relocation");
 
   await addLocation({

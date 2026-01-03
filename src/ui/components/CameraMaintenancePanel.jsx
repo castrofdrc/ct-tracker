@@ -14,8 +14,13 @@ export function CameraMaintenancePanel() {
       alert("Seleccioná un tipo de mantenimiento.");
       return;
     }
-    project.maintenanceCamera(selectedCameraId, type);
-    setType("");
+
+    try {
+      project.maintenanceCamera(selectedCameraId, type);
+      setType("");
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
