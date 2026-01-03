@@ -137,6 +137,7 @@ function App() {
                       usersById={project.usersById}
                       placeCamera={project.placeCamera}
                       removeCamera={project.removeCamera}
+                      deleteCamera={project.deleteCamera}
                       isSelected={camera.id === ui.selectedCameraId}
                     />
                   ))}

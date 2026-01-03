@@ -7,6 +7,9 @@ import {
   setDoc,
   getDoc,
   serverTimestamp,
+  getDocs,
+  writeBatch,
+  deleteDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { createOperation } from "./operations.service";
@@ -77,4 +80,27 @@ export async function placeCamera(cameraId, projectId) {
 
 export async function removeCamera(cameraId, projectId) {
   await createOperation(cameraId, projectId, "removal");
+}
+
+export async function deleteCameraHard(cameraId) {
+  const batch = writeBatch(db);
+
+  const cameraRef = doc(db, "cameras", cameraId);
+
+  // operations
+  const opsSnap = await getDocs(
+    collection(db, "cameras", cameraId, "operations"),
+  );
+  opsSnap.forEach((d) => batch.delete(d.ref));
+
+  // locations
+  const locSnap = await getDocs(
+    collection(db, "cameras", cameraId, "locations"),
+  );
+  locSnap.forEach((d) => batch.delete(d.ref));
+
+  // camera doc
+  batch.delete(cameraRef);
+
+  await batch.commit();
 }

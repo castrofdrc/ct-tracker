@@ -8,6 +8,7 @@ export function CameraItem({
   usersById,
   placeCamera,
   removeCamera,
+  deleteCamera,
   isSelected,
 }) {
   const [isExpandedOps, setIsExpandedOps] = useState(false);
@@ -96,6 +97,29 @@ export function CameraItem({
           )}
         </>
       )}
+
+      <button
+        style={{ color: "red", marginTop: "8px" }}
+        onClick={async () => {
+          const ok = window.confirm(
+            `Eliminar ${camera.id}?\nEsta acción no puede revertirse.`,
+          );
+          if (!ok) return;
+
+          const typed = window.prompt(
+            `Escribí el ID exacto de la cámara para confirmar:`,
+          );
+
+          if (typed !== camera.id) {
+            alert("ID incorrecto. Eliminación cancelada.");
+            return;
+          }
+
+          await deleteCamera(camera.id);
+        }}
+      >
+        Eliminar cámara
+      </button>
     </li>
   );
 }
