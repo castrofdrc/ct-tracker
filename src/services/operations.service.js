@@ -15,7 +15,7 @@ import {
 export function listenToOperations(cameraId, onChange, onError) {
   const q = query(
     collection(db, "cameras", cameraId, "operations"),
-    orderBy("createdAt", "desc"),
+    orderBy("clientCreatedAt", "desc"),
   );
 
   return onSnapshot(
@@ -39,6 +39,7 @@ export async function createOperation(cameraId, projectId, type, extra = {}) {
     type,
     userId: auth.currentUser.uid,
     ...extra,
+    clientCreatedAt: Date.now(),
     createdAt: serverTimestamp(),
   });
 }

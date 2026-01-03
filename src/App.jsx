@@ -8,6 +8,8 @@ import { CameraItem } from "./ui/components/CameraItem";
 import { ProjectSelector } from "./ui/components/ProjectSelector";
 import { CameraRelocationPanel } from "./ui/components/CameraRelocationPanel";
 import { CameraMaintenancePanel } from "./ui/components/CameraMaintenancePanel";
+import { useNetworkStatus } from "./ui/useNetworkStatus";
+
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
@@ -24,6 +26,7 @@ L.Icon.Default.mergeOptions({
 
 function App() {
   const ui = useUI();
+  const isOnline = useNetworkStatus();
   const { user, authLoading, login, logout } = useAuth();
   const project = useProject({
     projectId: ui.selectedProjectId,
@@ -32,6 +35,11 @@ function App() {
   });
 
   const handleCreateCamera = async () => {
+    if (!navigator.onLine) {
+      alert("Para crear una nueva cámara necesitás conexión.");
+      return;
+    }
+
     if (!ui.newCameraId) return;
 
     if (!/^CT_\d{3}$/.test(ui.newCameraId)) {
@@ -71,6 +79,11 @@ function App() {
 
   return (
     <div>
+      {!isOnline && (
+        <div style={{ background: "#fde68a", padding: "8px" }}>
+          ⚠️ Sin conexión. Los cambios se guardarán localmente.
+        </div>
+      )}
       <h1>CT Tracker</h1>
       <ProjectContext.Provider value={project}>
         <UIContext.Provider value={ui}>

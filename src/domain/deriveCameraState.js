@@ -20,15 +20,13 @@ export function deriveCameraState(operations = []) {
 
   switch (last.type) {
     case "deploy":
+    case "removal":
       return "inactive";
 
     case "placement":
     case "relocation":
     case "maintenance":
       return "active";
-
-    case "removal":
-      return "inactive";
 
     default:
       return "inactive";

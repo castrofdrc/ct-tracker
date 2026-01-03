@@ -233,3 +233,12 @@ Diseño previsto:
   camera.location
   camera.status
 - Historial inmutable
+
+---
+
+## Limitación conocida (offline)
+
+- La creación de nuevas cámaras debe realizarse con conexión.
+- Operaciones offline están soportadas solo sobre cámaras ya existentes.
+- Firestore no garantiza orden causal de documentos creados offline con `serverTimestamp`.
+- Esta limitación se resolverá en una fase posterior mediante backend / batching.

@@ -23,4 +23,14 @@ describe("deriveCameraState", () => {
     ];
     expect(deriveCameraState(ops)).toBe("inactive");
   });
+
+  it("respeta el orden por clientCreatedAt", () => {
+    const ops = [
+      { type: "deploy", clientCreatedAt: 1 },
+      { type: "placement", clientCreatedAt: 2 },
+      { type: "maintenance", clientCreatedAt: 3 },
+    ];
+
+    expect(deriveCameraState(ops)).toBe("active");
+  });
 });
