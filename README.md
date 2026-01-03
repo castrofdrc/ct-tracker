@@ -222,10 +222,14 @@ Diseño previsto:
 
 ---
 
-## Próximos pasos recomendados
+## Dominio cerrado (v1)
 
-1. Validación de secuencias de operaciones
-2. Hard delete seguro de cámaras
-3. Tests unitarios de dominio
-4. Pulido UX (mensajes, confirmaciones, accesibilidad)
-5. Exportaciones / reporting
+- Estados: active / inactive (derivados)
+- Operaciones válidas:
+  deploy, placement, relocation, maintenance, removal
+- Operaciones eliminadas definitivamente:
+  status_change, relocate
+- No existe:
+  camera.location
+  camera.status
+- Historial inmutable

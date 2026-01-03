@@ -7,7 +7,10 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { db, auth } from "../firebase";
-import { assertCameraIsActive } from "../domain/operationGuards";
+import {
+  assertCameraIsActive,
+  assertNotRemoved,
+} from "../domain/operationGuards";
 
 export function listenToOperations(cameraId, onChange, onError) {
   const q = query(
@@ -50,6 +53,8 @@ export async function createMaintenance(
     throw new Error("maintenanceType inválido");
   }
 
+  assertCameraIsActive(operations);
+  assertNotRemoved(operations);
   assertCameraIsActive(operations);
 
   return createOperation(cameraId, projectId, "maintenance", {

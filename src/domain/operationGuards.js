@@ -23,3 +23,19 @@ export function assertHasBeenPlaced(operations) {
     );
   }
 }
+
+export function assertNotRemoved(operations) {
+  if (!Array.isArray(operations) || operations.length === 0) {
+    return;
+  }
+
+  const last = [...operations].sort((a, b) => {
+    const toMillis = (d) =>
+      typeof d?.toMillis === "function" ? d.toMillis() : d;
+    return toMillis(b.createdAt) - toMillis(a.createdAt);
+  })[0];
+
+  if (last?.type === "removal") {
+    throw new Error("Operación inválida: la cámara fue retirada del campo.");
+  }
+}

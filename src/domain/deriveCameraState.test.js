@@ -23,16 +23,4 @@ describe("deriveCameraState", () => {
     ];
     expect(deriveCameraState(ops)).toBe("inactive");
   });
-
-  it("legacy status_change se respeta", () => {
-    const ops = [
-      { type: "status_change", statusAfter: "active", createdAt: 1 },
-    ];
-    expect(deriveCameraState(ops)).toBe("active");
-  });
-
-  it("legacy relocate activa", () => {
-    const ops = [{ type: "relocate", createdAt: 3 }];
-    expect(deriveCameraState(ops)).toBe("active");
-  });
 });

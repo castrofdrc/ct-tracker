@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { assertCameraIsActive, assertHasBeenPlaced } from "./operationGuards";
+import {
+  assertCameraIsActive,
+  assertHasBeenPlaced,
+  assertNotRemoved,
+} from "./operationGuards";
 
 describe("operationGuards", () => {
   describe("assertCameraIsActive", () => {
@@ -43,6 +47,23 @@ describe("operationGuards", () => {
       ];
 
       expect(() => assertHasBeenPlaced(ops)).not.toThrow();
+    });
+  });
+
+  describe("assertNotRemoved", () => {
+    it("lanza error si la última operación es removal", () => {
+      const ops = [
+        { type: "placement", createdAt: 1 },
+        { type: "removal", createdAt: 2 },
+      ];
+
+      expect(() => assertNotRemoved(ops)).toThrow(/retirada/i);
+    });
+
+    it("NO lanza error si la cámara sigue activa", () => {
+      const ops = [{ type: "placement", createdAt: 1 }];
+
+      expect(() => assertNotRemoved(ops)).not.toThrow();
     });
   });
 });

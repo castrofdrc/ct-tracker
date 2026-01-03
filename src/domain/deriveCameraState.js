@@ -19,21 +19,16 @@ export function deriveCameraState(operations = []) {
   if (!last) return "inactive";
 
   switch (last.type) {
-    // Nuevo dominio
     case "deploy":
       return "inactive";
+
     case "placement":
     case "relocation":
     case "maintenance":
       return "active";
+
     case "removal":
       return "inactive";
-
-    // Legacy (compatibilidad temporal)
-    case "status_change":
-      return last.statusAfter === "active" ? "active" : "inactive";
-    case "relocate":
-      return "active";
 
     default:
       return "inactive";

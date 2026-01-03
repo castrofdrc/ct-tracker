@@ -11,7 +11,10 @@ import {
 import { db } from "../firebase";
 import { createOperation } from "./operations.service";
 import { addLocation } from "./locations.service";
-import { assertHasBeenPlaced } from "../domain/operationGuards";
+import {
+  assertHasBeenPlaced,
+  assertNotRemoved,
+} from "../domain/operationGuards";
 
 export function listenToCameras(projectId, onChange, onError) {
   const q = query(
@@ -42,9 +45,7 @@ export async function createCamera(cameraId, projectId) {
     updatedAt: serverTimestamp(),
   });
 
-  await createOperation(cameraId, projectId, "deploy", {
-    statusAfter: "inactive",
-  });
+  await createOperation(cameraId, projectId, "deploy", {});
 }
 
 export async function relocateCamera(
@@ -55,6 +56,7 @@ export async function relocateCamera(
   operations = [],
 ) {
   assertHasBeenPlaced(operations);
+  assertNotRemoved(operations);
 
   await createOperation(cameraId, projectId, "relocation");
 
@@ -69,19 +71,6 @@ export async function relocateCamera(
 
 export async function placeCamera(cameraId, projectId) {
   await createOperation(cameraId, projectId, "placement");
-
-  const snap = await getDoc(doc(db, "cameras", cameraId));
-  const loc = snap.data().location;
-
-  if (loc?.lat != null && loc?.lng != null) {
-    await addLocation({
-      cameraId,
-      projectId,
-      lat: loc.lat,
-      lng: loc.lng,
-      originOperation: "placement",
-    });
-  }
 }
 
 export async function removeCamera(cameraId, projectId) {
