@@ -27,7 +27,7 @@ export function CameraMaintenancePanel() {
     <div
       style={{ border: "1px solid #ccc", padding: "8px", marginTop: "12px" }}
     >
-      <h3>Aplicar mantenimiento</h3>
+      <h3>Mantenimiento 🪫</h3>
 
       <select value={type} onChange={(e) => setType(e.target.value)}>
         <option value="">Seleccionar…</option>
@@ -36,7 +36,7 @@ export function CameraMaintenancePanel() {
         <option value="both">Baterías y memoria</option>
       </select>
 
-      <button onClick={applyMaintenance}>Aplicar mantenimiento</button>
+      <button onClick={applyMaintenance}>Aplicar</button>
     </div>
   );
 }

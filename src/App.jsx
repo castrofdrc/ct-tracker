@@ -78,16 +78,24 @@ function App() {
 
           {user && ui.selectedProjectId && (
             <>
+              <p>Proyecto activo: {ui.selectedProjectId}</p>
+
               <button
+                // style={{ marginLeft: "8px" }}
+                onClick={() => ui.closeProject()}
+              >
+                Cerrar proyecto
+              </button>
+
+              <button
+                style={{ color: "red", marginTop: "8px" }}
                 onClick={async () => {
                   ui.resetSession();
                   await logout();
                 }}
               >
-                Logout
+                Cerrar sesión
               </button>
-
-              <p>Proyecto activo: {ui.selectedProjectId}</p>
 
               <h2>Mapa de cámaras</h2>
               <CameraMap
@@ -137,7 +145,6 @@ function App() {
                       usersById={project.usersById}
                       placeCamera={project.placeCamera}
                       removeCamera={project.removeCamera}
-                      deleteCamera={project.deleteCamera}
                       isSelected={camera.id === ui.selectedCameraId}
                     />
                   ))}

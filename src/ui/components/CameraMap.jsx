@@ -55,7 +55,11 @@ export function CameraMap({ cameras, onRelocate }) {
           <Popup>
             <strong>{camera.id}</strong>
             <br />
-            Estado: {camera.derivedState}
+            Ubicación:
+            <br />
+            {camera.location.lat}
+            <br />
+            {camera.location.lng}
           </Popup>
         </Marker>
       ))}

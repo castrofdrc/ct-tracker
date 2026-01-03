@@ -5,7 +5,6 @@ import {
   placeCamera,
   removeCamera,
   relocateCamera,
-  deleteCameraHard,
 } from "../services/cameras.service";
 import {
   listenToOperations,
@@ -162,10 +161,6 @@ export function useProject({ projectId, authLoading, user }) {
     return removeCamera(cameraId, projectId);
   };
 
-  const deleteCameraForProject = (cameraId) => {
-    return deleteCameraHard(cameraId);
-  };
-
   const camerasWithDerivedState = cameras.map((camera) => {
     const ops = operationsByCamera[camera.id] || [];
     const derivedState = deriveCameraState(ops);
@@ -188,6 +183,5 @@ export function useProject({ projectId, authLoading, user }) {
     relocateCamera: relocateCameraForProject,
     maintenanceCamera: maintenanceCameraForProject,
     removeCamera: removeCameraForProject,
-    deleteCamera: deleteCameraForProject,
   };
 }
