@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { UIContext } from "../UIContext";
 
 export function CameraItem({
@@ -12,7 +12,9 @@ export function CameraItem({
 }) {
   const [isExpandedOps, setIsExpandedOps] = useState(false);
   const [isExpandedLocations, setIsExpandedLocations] = useState(false);
-  const { setSelectedCameraId } = useContext(UIContext);
+  const { setSelectedCameraId, pendingCameraState, setPendingCameraState } =
+    useContext(UIContext);
+
   const [showDetail, setShowDetail] = useState(false);
 
   const MAX_VISIBLE = 3;
@@ -25,10 +27,30 @@ export function CameraItem({
     ? locations
     : locations.slice(0, MAX_VISIBLE);
 
+  const visualState = pendingCameraState[camera.id] ?? camera.derivedState;
+
+  useEffect(() => {
+    if (
+      pendingCameraState[camera.id] &&
+      pendingCameraState[camera.id] === camera.derivedState
+    ) {
+      setPendingCameraState((prev) => {
+        const copy = { ...prev };
+        delete copy[camera.id];
+        return copy;
+      });
+    }
+  }, [
+    camera.derivedState,
+    camera.id,
+    pendingCameraState,
+    setPendingCameraState,
+  ]);
+
   return (
     <li
       style={{
-        opacity: camera.derivedState === "inactive" ? 0.6 : 1,
+        opacity: visualState === "inactive" ? 0.6 : 1,
         border: isSelected ? "2px solid #2563eb" : "1px solid #ddd",
         padding: "8px",
         marginBottom: "8px",
@@ -56,14 +78,37 @@ export function CameraItem({
             style={{ cursor: "pointer" }}
           >
             {camera.id}
+            {pendingCameraState[camera.id] && (
+              <span style={{ marginLeft: "6px", color: "#ca8a04" }}>⏳</span>
+            )}
           </strong>
 
-          {camera.derivedState === "inactive" && (
-            <button onClick={() => placeCamera(camera.id)}>Colocar</button>
+          {visualState === "inactive" && (
+            <button
+              onClick={() => {
+                setPendingCameraState((prev) => ({
+                  ...prev,
+                  [camera.id]: "active",
+                }));
+                placeCamera(camera.id);
+              }}
+            >
+              Colocar
+            </button>
           )}
 
-          {camera.derivedState === "active" && (
-            <button onClick={() => removeCamera(camera.id)}>Retirar</button>
+          {visualState === "active" && (
+            <button
+              onClick={() => {
+                setPendingCameraState((prev) => ({
+                  ...prev,
+                  [camera.id]: "inactive",
+                }));
+                removeCamera(camera.id);
+              }}
+            >
+              Retirar
+            </button>
           )}
         </div>
 

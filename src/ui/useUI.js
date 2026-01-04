@@ -7,6 +7,8 @@ export function useUI() {
   const [password, setPassword] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [pendingCameraState, setPendingCameraState] = useState({});
+
   const closeProject = () => {
     setSelectedProjectId(null);
     setSelectedCameraId(null);
@@ -40,5 +42,8 @@ export function useUI() {
 
     closeProject,
     resetSession,
+
+    pendingCameraState,
+    setPendingCameraState,
   };
 }
