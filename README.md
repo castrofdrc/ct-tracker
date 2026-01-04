@@ -1,244 +1,178 @@
-# CT-Tracker
+# CT-Tracker — Estado actual del proyecto
 
-CT-Tracker es una aplicación web para el **seguimiento operativo de cámaras trampa**, orientada a registrar **eventos reales de campo** (despliegue, colocación, relocalización, mantenimiento y retiro), manteniendo un **historial auditable**, un **modelo de dominio explícito** y una visualización geoespacial consistente.
+## Descripción general
 
----
+CT-Tracker es una aplicación **offline-first** para el seguimiento operativo de **cámaras trampa en campo**.  
+Permite registrar cámaras, su estado operativo y su historial de operaciones y ubicaciones, priorizando el uso **en móvil**, **en condiciones de conectividad intermitente**.
 
-## Objetivo de la aplicación
-
-- Registrar **qué pasa con cada cámara**, no solo su estado actual.
-- Separar claramente:
-  - **eventos** (operations)
-  - **estado derivado** (active / inactive)
-  - **historial espacial** (locations)
-- Evitar estados implícitos, mutaciones silenciosas y correcciones no auditables.
-- Preparar la base para análisis posteriores, exportaciones y trabajo multiusuario.
+La aplicación está diseñada para **uso real en campo**, no como un sistema teórico: todas las decisiones técnicas priorizan robustez, claridad de dominio y comportamiento predecible.
 
 ---
 
-## Modelo de dominio
+## Objetivos del sistema
 
-### 1. Cameras
-
-Colección raíz: cameras/{cameraId}
-Contiene únicamente **metadatos estáticos** de la cámara.
-
-No almacena ubicación ni estado mutable.
-
-El estado (`active` / `inactive`) se **deriva exclusivamente** del historial de operaciones.
+- Registrar cámaras trampa por identificador único.
+- Mantener un historial completo de operaciones por cámara.
+- Determinar el estado operativo **active / inactive** de forma derivada.
+- Permitir operar **offline**, con sincronización posterior.
+- Evitar inconsistencias de dominio o “estados mágicos”.
+- Servir como base sólida para una futura app Android.
 
 ---
 
-### 2. Operations (eventos)
+## Modelo de dominio (cerrado)
 
-Subcolección: cameras/{cameraId}/operations/{operationId}
-Cada documento representa un **evento real** ocurrido sobre la cámara.
+### Estados de cámara
 
-Tipos de operación válidos:
+La cámara **solo puede estar en uno de estos estados**:
 
-| Tipo | Descripción |
-|---|---|
-| deploy | Alta de la cámara en el sistema |
-| placement | Colocación en el campo |
-| relocation | Cambio de ubicación |
-| maintenance | Mantenimiento sin retiro |
-| removal | Retiro del campo |
+- `active`
+- `inactive`
 
-Campos relevantes:
-- `type`
-- `createdAt`
-- `userId`
-- `maintenanceType` (solo para maintenance)
-
-#### maintenanceType
-Valores posibles:
-- `battery`
-- `sd`
-- `both`
-
-El mantenimiento **no cambia el estado** de la cámara.
+No existen otros estados.
 
 ---
 
-### 3. Locations (historial espacial)
+### Operaciones (eventos)
 
-Subcolección: cameras/{cameraId}/locations/{locationId}
-Cada documento representa una **ubicación histórica** asociada a un evento (`placement` o `relocation`).
+Las operaciones son **eventos históricos**, no estados.
 
-Reglas clave:
-- Nunca se edita una ubicación existente.
-- Cada relocalización crea **una nueva location**.
-- No existe `camera.location` como fuente de verdad.
+Operaciones válidas:
 
----
+- `deploy` – alta de la cámara en el sistema
+- `placement` – colocación en campo
+- `relocation` – cambio de ubicación
+- `maintenance` – mantenimiento sin retiro
+- `removal` – retiro del campo
 
-### 4. Estado derivado
+Secuencias válidas:
 
-El estado de la cámara **no se guarda**.
+- `deploy → placement → relocation* → maintenance* → removal`
+- `deploy → removal` (sin placement)
 
-Se calcula dinámicamente a partir de las operaciones:
-
-- `active` → última operación relevante es `placement` o `relocation`
-- `inactive` → última operación relevante es `removal` o solo `deploy`
-
-Función central: deriveCameraState(operations)
+La validación de secuencia se realiza **en frontend (guards)**.  
+Backend (Cloud Functions / Rules) queda planificado para más adelante.
 
 ---
 
-## Mapa (Leaflet)
+### Derivación de estado
 
-### Principios
+El estado `active / inactive` **NO se guarda** explícitamente como fuente de verdad.
 
-- El mapa es una **herramienta de acción**, no solo de visualización.
-- El mapa **siempre renderiza**, incluso si no hay cámaras o ubicaciones.
-- Nunca se renderiza `FitBounds` con coordenadas inválidas.
+Se **deriva exclusivamente** a partir del historial de operaciones confirmado por Firestore.
 
-### Comportamiento
-
-- 0 cámaras con ubicación  
-  → mapa centrado en un punto por defecto.
-- 1 cámara con ubicación  
-  → el mapa se centra automáticamente en esa cámara.
-- 2 o más cámaras con ubicación  
-  → `FitBounds` ajusta la vista global.
-
-### Reglas técnicas
-
-- Solo se consideran ubicaciones donde:
-  - `lat` y `lng` son `Number.isFinite`
-- `FitBounds` se renderiza **solo si hay 2+ ubicaciones válidas**.
-- Para 1 cámara seleccionada se usa un componente dedicado de centrado (`CenterOnCamera`).
-
-Esto evita errores de Leaflet como: `Attempted to load an infinite number of tiles`
+Esto evita:
+- ambigüedad
+- corrupción de estado
+- dependencia de flags manuales
 
 ---
 
-## Relocalización manual
+## Offline-first (estado real)
 
-Además del click en el mapa, existe un **panel explícito de relocalización manual**.
+### Qué está soportado
 
-Características:
-- Inputs numéricos (`lat`, `lng`)
-- Acción explícita: **“Relocalizar cámara”**
-- Internamente dispara:
-  - operación `relocation`
-  - nueva entrada en `locations`
+- La app **abre sin conexión** (PWA).
+- Las cámaras existentes pueden operarse offline:
+  - placement
+  - relocation
+  - maintenance
+  - removal
+- Las operaciones se guardan localmente y se sincronizan al volver online.
+- La UI refleja **la intención del usuario** cuando coloca o retira una cámara, incluso offline.
 
-Nunca se edita una ubicación existente.
+### Qué NO se promete (por diseño)
 
----
+- Estado derivado definitivo offline.
+- Orden temporal exacto de operaciones offline.
+- Indicador global de “sincronización completa”.
 
-## Mantenimiento
-
-Cada cámara activa puede recibir mantenimiento mediante un panel dedicado:
-
-- Selector de tipo:
-  - Cambio de baterías
-  - Cambio de memoria
-  - Ambos
-- Genera una operación `maintenance`
-- Se refleja en el historial
-- No modifica ubicación ni estado
+Estas limitaciones son **reconocidas y documentadas**, no bugs.
 
 ---
 
-## Usuarios y displayName
+## UX offline (decisiones clave)
 
-- Cada operación guarda `userId`.
-- El nombre visible del usuario se resuelve desde:
-  `users/{uid}`
-  `displayName: string`
-- El historial muestra:
-  `maintenance — 03/01/2026 — por Juan Pérez`
-
----
-
-### Reglas de seguridad
-- Cada usuario solo puede leer su propio documento `users/{uid}`.
-- Escritura de usuarios reservada para backend/admin.
+- Se muestra aviso global: "Sin conexión. Los cambios se guardarán localmente."
+- Para `placement` / `removal`:
+- La UI refleja inmediatamente el cambio visual.
+- Se usa un estado **transitorio de UI**, no de dominio.
+- No se falsea estado real ni se simulan timestamps.
+- No se implementa “sincronizar” manual mientras no haya backend.
 
 ---
 
-## Autenticación y Logout
+## PWA (cerrado)
 
-- Autenticación con Firebase Auth.
-- Logout correcto incluye:
-  - `signOut`
-  - limpieza explícita del estado UI:
-    - proyecto seleccionado
-    - cámara seleccionada
-    - filtros
-    - inputs temporales
+La app es una **PWA funcional** usando `vite-plugin-pwa` (Workbox).
 
-Evita estado zombi entre sesiones.
+Capacidades actuales:
+- Instalación como app.
+- Precache automático de:
+- `index.html`
+- JS/CSS con hash de Vite
+- Refresh offline **sin pantalla blanca**.
 
----
-
-## Eliminación de cámaras
-
-Actualmente **no implementado** en frontend.
-
-Diseño previsto:
-- Hard delete completo (cámara + operaciones + locations)
-- Confirmación explícita en UI
-- Ejecución vía backend / Cloud Function
+No se implementa aún:
+- mapas offline
+- background sync
+- push notifications
 
 ---
 
-## Stack tecnológico
+## Stack técnico
 
-- Frontend: React + Vite
-- Mapa: Leaflet + react-leaflet
-- Backend: Firebase
-  - Authentication
-  - Firestore
-  - Firebase Hosting
-- Estado: React hooks + Context API
-- Sin Redux / Zustand
+### Frontend
+- React
+- Vite
+- Leaflet (mapa)
+- PWA con Workbox (`vite-plugin-pwa`)
+
+### Backend
+- Firebase Auth
+- Firestore (producción)
+- Firestore Emulator (testing local)
 
 ---
 
-## Principios de diseño
+## Testing
 
-- Dominio explícito antes que conveniencia UI
-- Eventos > estados mutables
-- Historial siempre auditable
-- Nada se “corrige” sin dejar rastro
-- UI alineada al dominio, no al revés
+- Tests de dominio **puros** (sin Firestore).
+- Tests corriendo en local.
+- Validaciones críticas de secuencia en frontend.
+
+---
+
+## Legacy
+
+- Eliminado completamente:
+- `status_change`
+- operaciones legacy incompatibles
+- No existe data legacy en producción que requiera compatibilidad.
 
 ---
 
 ## Estado actual del proyecto
 
-- MVP funcional completo
-- Dominio consolidado
-- Legacy de ubicación eliminado
-- Mapa estable y robusto
-- Base lista para:
-  - validación de secuencias
-  - hard delete
-  - tests de dominio
-  - mejoras UX
+- Dominio: **cerrado**
+- Offline UX: **resuelto**
+- PWA básica: **resuelta**
+- App estable en:
+- online
+- offline
+- refresh offline
+
+El proyecto está listo para avanzar en:
+- pulido UX mobile-first
+- diseño de mapas offline
+- documentación de roadmap backend
+- empaquetado Android (PWA / WebView)
 
 ---
 
-## Dominio cerrado (v1)
+## Principios del proyecto
 
-- Estados: active / inactive (derivados)
-- Operaciones válidas:
-  deploy, placement, relocation, maintenance, removal
-- Operaciones eliminadas definitivamente:
-  status_change, relocate
-- No existe:
-  camera.location
-  camera.status
-- Historial inmutable
-
----
-
-## Limitación conocida (offline)
-
-- La creación de nuevas cámaras debe realizarse con conexión.
-- Operaciones offline están soportadas solo sobre cámaras ya existentes.
-- Firestore no garantiza orden causal de documentos creados offline con `serverTimestamp`.
-- Esta limitación se resolverá en una fase posterior mediante backend / batching.
+- Correcto antes que “lindo”
+- Dominio claro antes que features
+- Offline honesto antes que simulaciones
+- Decisiones explícitas y documentadas
