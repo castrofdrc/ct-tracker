@@ -9,8 +9,21 @@ export function useUI() {
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [pendingCameraState, setPendingCameraState] = useState({});
   const [activeScreen, setActiveScreen] = useState("home");
+  const [addActionButton, setAddActionButton] = useState(false);
+
+  const SCREENS = [
+    "home",
+    "projects",
+    "main",
+    "newAction",
+    "cameraList",
+    "settings",
+  ];
 
   const goTo = (screen) => {
+    if (!SCREENS.includes(screen)) {
+      throw new Error(`Screen inválido: ${screen}`);
+    }
     setActiveScreen(screen);
   };
 
@@ -40,6 +53,9 @@ export function useUI() {
     activeScreen,
     goTo,
     resetNavigation,
+
+    addActionButton,
+    setAddActionButton,
 
     selectedCameraId,
     setSelectedCameraId,

@@ -1,4 +1,10 @@
+import { useContext } from "react";
+import { UIContext } from "../UIContext";
+import addIcon from "../../../assets/add.svg";
+
 export function BottomActionBar() {
+  const ui = useContext(UIContext);
+
   return (
     <div
       style={{
@@ -26,21 +32,32 @@ export function BottomActionBar() {
           fontSize: "0.85em",
           padding: 10, // Aumentar área de toque (fat finger friendly)
         }}
-        onClick={() => console.log("config")}
+        onClick={() => ui.goTo("settings")}
       >
         Conf
       </button>
 
       {/* Acción principal */}
       <button
+        onClick={() => ui.setAddActionButton((v) => !v)}
         style={{
           background: "transparent",
-          border: "none",
-          fontSize: "0.85em",
+          width: 44,
+          height: 44,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 0,
         }}
-        onClick={() => console.log("new")}
       >
-        More
+        <img
+          src={addIcon}
+          alt="Agregar"
+          style={{
+            width: 40,
+            height: 40,
+          }}
+        />
       </button>
 
       {/* Lista */}
@@ -50,7 +67,7 @@ export function BottomActionBar() {
           border: "none",
           fontSize: "0.85em",
         }}
-        onClick={() => console.log("list")}
+        onClick={() => ui.goTo("cameraList")}
       >
         List
       </button>

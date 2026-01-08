@@ -18,7 +18,7 @@ export function TopStatusBar({ projectId }) {
           background: "#ffffff",
           borderRadius: "10px",
           border: "1px solid #000",
-          padding: "0 12px",
+          padding: "0 20px",
           display: "flex",
           alignItems: "center",
           fontSize: "0.85em",
