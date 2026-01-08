@@ -48,11 +48,13 @@ export function TopStatusBar({ projectId }) {
             left: 12,
             right: 12,
             zIndex: 99,
-            fontWeight: "bold",
+            fontWeight: 600,
             color: "#dc2626",
             fontSize: "0.8em",
             textAlign: "center", // Mejor centrado en móvil
             textShadow: "0 0 2px white", // Legibilidad sobre mapa
+            fontFamily:
+              "Roboto, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           Sin conexión, cambios pendientes

@@ -1,122 +1,169 @@
-# CT-Tracker — Estado actual del proyecto
+# CT-Tracker — README actualizado
 
 ## Descripción general
 
-CT-Tracker es una aplicación **offline-first** para el seguimiento operativo de **cámaras trampa en campo**.  
-Permite registrar cámaras, su estado operativo y su historial de operaciones y ubicaciones, priorizando el uso **en móvil**, **en condiciones de conectividad intermitente**.
+CT-Tracker es una aplicación **offline-first**, **mobile-first** y orientada a **uso real en campo** para el seguimiento operativo de **cámaras trampa**.  
+Permite registrar cámaras, operar sobre ellas mediante eventos históricos y visualizar su estado operativo **derivado**, con foco en **robustez**, **claridad de dominio** y **comportamiento predecible** bajo conectividad intermitente.
 
-La aplicación está diseñada para **uso real en campo**, no como un sistema teórico: todas las decisiones técnicas priorizan robustez, claridad de dominio y comportamiento predecible.
+El proyecto no persigue “features vistosas”, sino un sistema confiable para trabajo de campo prolongado, pensado desde el inicio como base de una futura **app Android**.
 
 ---
 
 ## Objetivos del sistema
 
-- Registrar cámaras trampa por identificador único.
-- Mantener un historial completo de operaciones por cámara.
-- Determinar el estado operativo **active / inactive** de forma derivada.
-- Permitir operar **offline**, con sincronización posterior.
-- Evitar inconsistencias de dominio o “estados mágicos”.
-- Servir como base sólida para una futura app Android.
+- Registrar cámaras trampa mediante identificador único.
+- Gestionar **operaciones históricas** por cámara.
+- Derivar el estado operativo (`active / inactive`) sin flags manuales.
+- Permitir operación completa **offline** con sincronización posterior.
+- Proveer una UX honesta y consistente en escenarios sin red.
+- Mantener un dominio **cerrado**, explícito y sin ambigüedades.
+- Servir como base técnica sólida para:
+  - mapas offline
+  - backend más estricto
+  - empaquetado móvil (PWA / WebView)
 
 ---
 
 ## Modelo de dominio (cerrado)
 
+### Entidad principal
+
+#### Camera
+- Identificador único.
+- No contiene estado operativo persistido.
+- Toda su evolución se explica **exclusivamente** por operaciones.
+
+---
+
 ### Estados de cámara
 
-La cámara **solo puede estar en uno de estos estados**:
+Una cámara **solo puede estar en uno de estos estados**:
 
 - `active`
 - `inactive`
 
-No existen otros estados.
+No existen estados intermedios, flags auxiliares ni estados “temporales” de dominio.
 
 ---
 
 ### Operaciones (eventos)
 
-Las operaciones son **eventos históricos**, no estados.
+Las operaciones son **eventos históricos inmutables**, no estados.
 
 Operaciones válidas:
 
-- `deploy` – alta de la cámara en el sistema
-- `placement` – colocación en campo
+- `deploy` – alta lógica de la cámara en el sistema
+- `placement` – colocación en campo (define ubicación)
 - `relocation` – cambio de ubicación
 - `maintenance` – mantenimiento sin retiro
 - `removal` – retiro del campo
 
-Secuencias válidas:
+#### Secuencias válidas
 
 - `deploy → placement → relocation* → maintenance* → removal`
-- `deploy → removal` (sin placement)
+- `deploy → removal` (cámara nunca colocada)
 
-La validación de secuencia se realiza **en frontend (guards)**.  
-Backend (Cloud Functions / Rules) queda planificado para más adelante.
+La validación de secuencia:
+- Se realiza **en frontend** mediante guards de dominio.
+- Backend estricto (Rules / Functions) queda planificado a futuro.
 
 ---
 
 ### Derivación de estado
 
-El estado `active / inactive` **NO se guarda** explícitamente como fuente de verdad.
+El estado `active / inactive`:
 
-Se **deriva exclusivamente** a partir del historial de operaciones confirmado por Firestore.
+- **NO se guarda** como fuente de verdad.
+- **NO se manipula manualmente**.
+- Se **deriva exclusivamente** del historial confirmado de operaciones.
 
-Esto evita:
-- ambigüedad
-- corrupción de estado
-- dependencia de flags manuales
+Esto elimina:
+- estados corruptos
+- flags inconsistentes
+- dependencias temporales frágiles
 
 ---
 
 ## Offline-first (estado real)
 
-### Qué está soportado
+### Soportado actualmente
 
 - La app **abre sin conexión** (PWA).
-- Las cámaras existentes pueden operarse offline:
-  - placement
-  - relocation
-  - maintenance
-  - removal
-- Las operaciones se guardan localmente y se sincronizan al volver online.
-- La UI refleja **la intención del usuario** cuando coloca o retira una cámara, incluso offline.
+- Operaciones soportadas offline:
+  - `placement`
+  - `relocation`
+  - `maintenance`
+  - `removal`
+- Las operaciones:
+  - se guardan localmente
+  - se sincronizan automáticamente al volver online
+- La UI refleja **la intención del usuario**, incluso sin red.
 
-### Qué NO se promete (por diseño)
+---
+
+### Limitaciones explícitas (no bugs)
+
+Por decisión de diseño, **no se promete**:
 
 - Estado derivado definitivo offline.
-- Orden temporal exacto de operaciones offline.
-- Indicador global de “sincronización completa”.
+- Orden temporal exacto entre operaciones offline.
+- Indicador global de “todo sincronizado”.
 
-Estas limitaciones son **reconocidas y documentadas**, no bugs.
+Estas restricciones están:
+- documentadas
+- asumidas
+- alineadas con un modelo honesto offline-first.
 
 ---
 
 ## UX offline (decisiones clave)
 
-- Se muestra aviso global: "Sin conexión. Los cambios se guardarán localmente."
-- Para `placement` / `removal`:
-- La UI refleja inmediatamente el cambio visual.
-- Se usa un estado **transitorio de UI**, no de dominio.
-- No se falsea estado real ni se simulan timestamps.
-- No se implementa “sincronizar” manual mientras no haya backend.
+- Aviso global persistente:  
+  **“Sin conexión. Los cambios se guardarán localmente.”**
+- Para `placement` y `removal`:
+  - La UI cambia de inmediato.
+  - Se usa un **estado transitorio de UI**, no de dominio.
+- No se:
+  - falsifican estados reales
+  - simulan timestamps
+  - inventan confirmaciones inexistentes
+- No existe acción manual de “sincronizar” mientras no haya backend dedicado.
 
 ---
 
-## PWA (cerrado)
+## Mapas y visualización
 
-La app es una **PWA funcional** usando `vite-plugin-pwa` (Workbox).
+- Mapa interactivo con **Leaflet**.
+- Visualización de cámaras y ubicaciones actuales.
+- Modo online completo.
+- Modo offline funcional (sin tiles offline aún).
 
-Capacidades actuales:
-- Instalación como app.
-- Precache automático de:
-- `index.html`
-- JS/CSS con hash de Vite
-- Refresh offline **sin pantalla blanca**.
-
-No se implementa aún:
+### Planificado
 - mapas offline
+- caché selectiva de tiles
+- degradación visual explícita sin red
+
+---
+
+## PWA
+
+Implementada como **PWA real**, no experimental.
+
+### Capacidades actuales
+
+- Instalación como app.
+- Precache automático con Workbox:
+  - `index.html`
+  - bundles JS/CSS versionados por Vite
+- Refresh offline **sin pantalla blanca**.
+- Comportamiento estable online/offline.
+
+### No implementado aún
+
 - background sync
 - push notifications
+- mapas offline
+- manejo avanzado de versiones
 
 ---
 
@@ -125,7 +172,7 @@ No se implementa aún:
 ### Frontend
 - React
 - Vite
-- Leaflet (mapa)
+- Leaflet
 - PWA con Workbox (`vite-plugin-pwa`)
 
 ### Backend
@@ -138,35 +185,38 @@ No se implementa aún:
 ## Testing
 
 - Tests de dominio **puros** (sin Firestore).
-- Tests corriendo en local.
-- Validaciones críticas de secuencia en frontend.
+- Validación de secuencias críticas en frontend.
+- Tests ejecutables en entorno local.
+- Sin mocks complejos ni lógica duplicada.
 
 ---
 
 ## Legacy
 
 - Eliminado completamente:
-- `status_change`
-- operaciones legacy incompatibles
-- No existe data legacy en producción que requiera compatibilidad.
+  - `status_change`
+  - operaciones legacy incompatibles
+- No existe:
+  - data legacy en producción
+  - compatibilidad retroactiva pendiente
 
 ---
 
 ## Estado actual del proyecto
 
-- Dominio: **cerrado**
-- Offline UX: **resuelto**
+- Dominio: **cerrado y estable**
+- UX offline: **resuelta**
 - PWA básica: **resuelta**
 - App estable en:
-- online
-- offline
-- refresh offline
+  - online
+  - offline
+  - refresh offline
 
-El proyecto está listo para avanzar en:
+Lista para avanzar en:
 - pulido UX mobile-first
-- diseño de mapas offline
-- documentación de roadmap backend
-- empaquetado Android (PWA / WebView)
+- mapas offline
+- endurecimiento backend
+- roadmap Android
 
 ---
 
@@ -175,4 +225,4 @@ El proyecto está listo para avanzar en:
 - Correcto antes que “lindo”
 - Dominio claro antes que features
 - Offline honesto antes que simulaciones
-- Decisiones explícitas y documentadas
+- Decisiones explícitas, documentadas y sostenibles
