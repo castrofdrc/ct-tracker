@@ -8,12 +8,27 @@ export function useUI() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [pendingCameraState, setPendingCameraState] = useState({});
+  const [activeScreen, setActiveScreen] = useState("home");
+
+  const goTo = (screen) => {
+    setActiveScreen(screen);
+  };
+
+  const selectProject = (projectId) => {
+    setSelectedProjectId(projectId);
+  };
+
+  const resetNavigation = () => {
+    setActiveScreen("home");
+  };
 
   const closeProject = () => {
     setSelectedProjectId(null);
     setSelectedCameraId(null);
     setStatusFilter("all");
+    setActiveScreen("projects");
   };
+
   const resetSession = () => {
     setSelectedProjectId(null);
     setSelectedCameraId(null);
@@ -22,6 +37,10 @@ export function useUI() {
   };
 
   return {
+    activeScreen,
+    goTo,
+    resetNavigation,
+
     selectedCameraId,
     setSelectedCameraId,
 
@@ -39,6 +58,7 @@ export function useUI() {
 
     selectedProjectId,
     setSelectedProjectId,
+    selectProject,
 
     closeProject,
     resetSession,

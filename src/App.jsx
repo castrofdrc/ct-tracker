@@ -9,6 +9,9 @@ import { ProjectSelector } from "./ui/components/ProjectSelector";
 import { CameraRelocationPanel } from "./ui/components/CameraRelocationPanel";
 import { CameraMaintenancePanel } from "./ui/components/CameraMaintenancePanel";
 import { useNetworkStatus } from "./ui/useNetworkStatus";
+import { TopStatusBar } from "./ui/components/TopStatusBar";
+import { BottomActionBar } from "./ui/components/BottomActionBar";
+import { HomeScreen } from "./ui/screens/HomeScreen";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -28,6 +31,8 @@ function App() {
   const ui = useUI();
   const isOnline = useNetworkStatus();
   const { user, authLoading, login, logout } = useAuth();
+  const screen = ui.activeScreen;
+
   const project = useProject({
     projectId: ui.selectedProjectId,
     user,
@@ -62,70 +67,62 @@ function App() {
 
   if (!user) {
     return (
-      <div>
-        <input
-          placeholder="email"
-          onChange={(e) => ui.setEmail(e.target.value)}
+      <UIContext.Provider value={ui}>
+        <HomeScreen
+          email={ui.email}
+          password={ui.password}
+          setEmail={ui.setEmail}
+          setPassword={ui.setPassword}
+          onLogin={() => login(ui.email, ui.password)}
         />
-        <input
-          type="password"
-          placeholder="password"
-          onChange={(e) => ui.setPassword(e.target.value)}
-        />
-        <button onClick={() => login(ui.email, ui.password)}>Login</button>
-      </div>
+      </UIContext.Provider>
+    );
+  }
+
+  if (!ui.selectedProjectId) {
+    return (
+      <UIContext.Provider value={ui}>
+        <ProjectSelector />
+      </UIContext.Provider>
     );
   }
 
   return (
-    <div>
-      {!isOnline && (
-        <div style={{ background: "#fde68a", padding: "8px" }}>
-          ⚠️ Sin conexión. Los cambios se guardarán localmente.
-        </div>
-      )}
-      <h1>CT Tracker</h1>
+    <UIContext.Provider value={ui}>
       <ProjectContext.Provider value={project}>
-        <UIContext.Provider value={ui}>
-          {user && !ui.selectedProjectId && <ProjectSelector user={user} />}
+        {screen === "main" && (
+          <>
+            <TopStatusBar projectId={ui.selectedProjectId} />
+            <BottomActionBar />
 
-          {user && ui.selectedProjectId && (
-            <>
-              <p>Proyecto activo: {ui.selectedProjectId}</p>
-
-              <button
-                // style={{ marginLeft: "8px" }}
-                onClick={() => ui.closeProject()}
-              >
-                Cerrar proyecto
-              </button>
-
-              <button
-                style={{ color: "red", marginTop: "8px" }}
-                onClick={async () => {
-                  ui.resetSession();
-                  await logout();
+            {/* MAPA */}
+            {ui.activeScreen === "main" && (
+              <div
+                style={{
+                  position: "fixed",
+                  inset: 0,
+                  zIndex: 0,
                 }}
               >
-                Cerrar sesión
-              </button>
+                <CameraMap
+                  cameras={project.cameras}
+                  onRelocate={project.relocateCamera}
+                />
+              </div>
+            )}
 
-              <h2>Mapa de cámaras</h2>
-              <CameraMap
-                cameras={project.cameras.filter((camera) => {
-                  if (ui.statusFilter === "all") return true;
-                  return camera.derivedState === ui.statusFilter;
-                })}
-                onRelocate={project.relocateCamera}
-              />
+            {/* PANELS */}
+            {/* <CameraRelocationPanel />
+            <CameraMaintenancePanel />*/}
 
-              <CameraRelocationPanel />
-              <CameraMaintenancePanel />
+            {/* LISTA */}
+            {/* <h3 style={{ marginTop: "16px" }}>Lista de Cámaras</h3>*/}
 
-              <h2>Cámaras</h2>
-
+            {/* <div
+              style={{ display: "flex", flexDirection: "column", gap: "8px" }}
+            >
               <label>
-                Filtrar por estado:{" "}
+                Filtrar por estado:
                 <select
                   value={ui.statusFilter}
                   onChange={(e) => ui.setStatusFilter(e.target.value)}
@@ -142,7 +139,9 @@ function App() {
                 onChange={(e) => ui.setNewCameraId(e.target.value)}
               />
               <button onClick={handleCreateCamera}>Crear cámara</button>
+            </div>
 
+            {ui.activeScreen === "cameraList" && (
               <ul>
                 {project.cameras
                   .filter((camera) => {
@@ -162,11 +161,11 @@ function App() {
                     />
                   ))}
               </ul>
-            </>
-          )}
-        </UIContext.Provider>
+            )}*/}
+          </>
+        )}
       </ProjectContext.Provider>
-    </div>
+    </UIContext.Provider>
   );
 }
 

@@ -1,197 +1,105 @@
-import { useContext, useState, useEffect } from "react";
-import { UIContext } from "../UIContext";
-
 export function CameraItem({
   camera,
   operations,
-  locations,
   usersById,
   placeCamera,
   removeCamera,
   isSelected,
 }) {
-  const [isExpandedOps, setIsExpandedOps] = useState(false);
-  const [isExpandedLocations, setIsExpandedLocations] = useState(false);
-  const { setSelectedCameraId, pendingCameraState, setPendingCameraState } =
-    useContext(UIContext);
+  const isActive = camera.derivedState === "active";
+  const canPlace = !isActive;
+  const primaryLabel = canPlace ? "Colocar" : "Retirar";
 
-  const [showDetail, setShowDetail] = useState(false);
-
-  const MAX_VISIBLE = 3;
-
-  const visibleOperations = isExpandedOps
-    ? operations
-    : operations.slice(0, MAX_VISIBLE);
-
-  const visibleLocations = isExpandedLocations
-    ? locations
-    : locations.slice(0, MAX_VISIBLE);
-
-  const visualState = pendingCameraState[camera.id] ?? camera.derivedState;
-
-  useEffect(() => {
-    if (
-      pendingCameraState[camera.id] &&
-      pendingCameraState[camera.id] === camera.derivedState
-    ) {
-      setPendingCameraState((prev) => {
-        const copy = { ...prev };
-        delete copy[camera.id];
-        return copy;
-      });
+  const handlePrimary = () => {
+    if (canPlace) {
+      placeCamera(camera.id);
+    } else {
+      removeCamera(camera.id);
     }
-  }, [
-    camera.derivedState,
-    camera.id,
-    pendingCameraState,
-    setPendingCameraState,
-  ]);
+  };
 
   return (
     <li
       style={{
-        opacity: visualState === "inactive" ? 0.6 : 1,
-        border: isSelected ? "2px solid #2563eb" : "1px solid #ddd",
-        padding: "8px",
-        marginBottom: "8px",
-        borderRadius: "4px",
+        listStyle: "none",
+        border: "1px solid #e5e7eb",
+        borderRadius: "10px",
+        padding: "12px",
+        marginBottom: "10px",
+        background: isSelected ? "#f9fafb" : "#ffffff",
       }}
     >
-      {/* HEADER OPERATIVO */}
+      {/* HEADER */}
       <div
         style={{
           display: "flex",
-          flexDirection: "column",
-          gap: "6px",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "8px",
         }}
       >
-        {/* Fila superior: ID + acciones */}
-        <div
+        <strong>{camera.id}</strong>
+        <span
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
+            fontSize: "0.8em",
+            padding: "2px 8px",
+            borderRadius: "999px",
+            background: isActive ? "#d1fae5" : "#fee2e2",
           }}
         >
-          <strong
-            onClick={() => setSelectedCameraId(camera.id)}
-            style={{ cursor: "pointer" }}
-          >
-            {camera.id}
-            {pendingCameraState[camera.id] && (
-              <span style={{ marginLeft: "6px", color: "#ca8a04" }}>⏳</span>
-            )}
-          </strong>
-
-          {visualState === "inactive" && (
-            <button
-              onClick={() => {
-                setPendingCameraState((prev) => ({
-                  ...prev,
-                  [camera.id]: "active",
-                }));
-                placeCamera(camera.id);
-              }}
-            >
-              Colocar
-            </button>
-          )}
-
-          {visualState === "active" && (
-            <button
-              onClick={() => {
-                setPendingCameraState((prev) => ({
-                  ...prev,
-                  [camera.id]: "inactive",
-                }));
-                removeCamera(camera.id);
-              }}
-            >
-              Retirar
-            </button>
-          )}
-        </div>
-
-        {/* Ubicación actual (solo si active) */}
-        {camera.derivedState === "active" && camera.location && (
-          <div
-            style={{
-              padding: "4px 6px",
-              background: "#ecfeff",
-              border: "1px solid #67e8f9",
-              borderRadius: "4px",
-              fontSize: "0.85em",
-              width: "fit-content",
-            }}
-          >
-            📍 Ubicación: {camera.location.lat}, {camera.location.lng}
-          </div>
-        )}
+          {camera.derivedState}
+        </span>
       </div>
 
-      <br />
-
+      {/* PRIMARY ACTION */}
       <button
-        onClick={() => setShowDetail(!showDetail)}
-        style={{ marginBottom: "8px", fontSize: "0.9em" }}
+        onClick={handlePrimary}
+        style={{
+          width: "100%",
+          minHeight: "44px",
+          fontWeight: 600,
+          background: canPlace ? "#2563eb" : "#dc2626",
+          color: "#ffffff",
+          borderRadius: "8px",
+          border: "none",
+          marginBottom: "8px",
+        }}
       >
-        {showDetail ? "Ocultar detalle" : "Ver detalle"}
+        {primaryLabel}
       </button>
 
-      {showDetail && (
-        <>
-          <h4>Historial de operaciones</h4>
-          <ul>
-            {visibleOperations.map((op) => (
+      {/* SECONDARY / DETAIL */}
+      <details>
+        <summary
+          style={{
+            cursor: "pointer",
+            fontSize: "0.9em",
+            color: "#374151",
+          }}
+        >
+          Ver detalle
+        </summary>
+
+        {/* LOCATION */}
+        {camera.location && (
+          <div style={{ marginTop: "6px", fontSize: "0.85em" }}>
+            Ubicación: {camera.location.lat.toFixed(5)},{" "}
+            {camera.location.lng.toFixed(5)}
+          </div>
+        )}
+
+        {/* HISTORY */}
+        <div style={{ marginTop: "6px" }}>
+          <strong style={{ fontSize: "0.85em" }}>Historial</strong>
+          <ul style={{ paddingLeft: "16px", fontSize: "0.85em" }}>
+            {operations.map((op) => (
               <li key={op.id}>
-                <strong>{op.type}</strong> —{" "}
-                {op.createdAt?.toDate().toLocaleString() || "…"}
-                {op.statusAfter && <> — status: {op.statusAfter}</>}
-                {op.type === "maintenance" && op.maintenanceType && (
-                  <> — maintenanceType: {op.maintenanceType}</>
-                )}
-                {op.userId && usersById?.[op.userId]?.displayName && (
-                  <> — por {usersById[op.userId].displayName}</>
-                )}
+                {op.type} — {usersById[op.userId]?.name || op.userId || "?"}
               </li>
             ))}
           </ul>
-
-          {operations.length > MAX_VISIBLE && (
-            <button onClick={() => setIsExpandedOps(!isExpandedOps)}>
-              {isExpandedOps ? "Ver menos" : "Ver más"}
-            </button>
-          )}
-
-          <h4>Historial de ubicaciones</h4>
-
-          {(!locations || locations.length === 0) && (
-            <p>Sin ubicaciones registradas.</p>
-          )}
-
-          {locations && locations.length > 0 && (
-            <>
-              <ul>
-                {visibleLocations.map((loc) => (
-                  <li key={loc.id}>
-                    {loc.createdAt?.toDate().toLocaleString() || "…"}
-                    {" — "}
-                    {loc.lat}, {loc.lng}
-                  </li>
-                ))}
-              </ul>
-
-              {locations.length > MAX_VISIBLE && (
-                <button
-                  onClick={() => setIsExpandedLocations(!isExpandedLocations)}
-                >
-                  {isExpandedLocations ? "Ver menos" : "Ver más"}
-                </button>
-              )}
-            </>
-          )}
-        </>
-      )}
+        </div>
+      </details>
     </li>
   );
 }
