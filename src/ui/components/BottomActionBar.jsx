@@ -1,6 +1,8 @@
 import { useContext } from "react";
 import { UIContext } from "../UIContext";
 import addIcon from "../../../assets/add.svg";
+import settingsIcon from "../../../assets/settings.svg";
+import listIcon from "../../../assets/list.svg";
 
 export function BottomActionBar() {
   const ui = useContext(UIContext);
@@ -9,7 +11,7 @@ export function BottomActionBar() {
     <div
       style={{
         position: "fixed",
-        // CAMBIO CRÍTICO: Suma el área segura del home indicator
+        // Suma el área segura del home indicator
         bottom: "calc(12px + env(safe-area-inset-bottom))",
         left: 12,
         right: 12,
@@ -21,55 +23,77 @@ export function BottomActionBar() {
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 16px",
+        padding: "0 40px",
       }}
     >
-      {/* ... tus botones siguen igual ... */}
       <button
-        style={{
-          background: "transparent",
-          border: "none",
-          fontSize: "0.85em",
-          padding: 10, // Aumentar área de toque (fat finger friendly)
-        }}
         onClick={() => ui.goTo("settings")}
+        style={{
+          width: 44,
+          height: 44,
+          padding: 0,
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        Conf
+        <img
+          src={settingsIcon}
+          alt="Configuración"
+          style={{
+            width: 26,
+            height: 26,
+            display: "block",
+          }}
+        />
       </button>
 
       {/* Acción principal */}
       <button
         onClick={() => ui.setAddActionButton((v) => !v)}
         style={{
-          background: "transparent",
           width: 44,
           height: 44,
+          padding: 0,
+
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: 0,
         }}
       >
         <img
           src={addIcon}
           alt="Agregar"
           style={{
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
           }}
         />
       </button>
 
       {/* Lista */}
       <button
+        onClick={() => ui.goTo("list")}
         style={{
-          background: "transparent",
-          border: "none",
-          fontSize: "0.85em",
+          width: 44,
+          height: 44,
+          padding: 0,
+
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-        onClick={() => ui.goTo("cameraList")}
       >
-        List
+        <img
+          src={listIcon}
+          alt="Configuración"
+          style={{
+            width: 21,
+            height: 21,
+            display: "block",
+          }}
+        />
       </button>
     </div>
   );

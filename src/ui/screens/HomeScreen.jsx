@@ -12,9 +12,8 @@ export function HomeScreen({
     height: 55,
     borderRadius: 8,
     border: "1px solid #0A0A0A",
-    padding: "0 14px",
+    padding: "0 20px",
     fontSize: 16,
-    fontFamily: "inherit",
     boxSizing: "border-box",
   };
 
@@ -42,14 +41,13 @@ export function HomeScreen({
       <div
         style={{
           width: "100%",
-          maxWidth: 430,
+          maxWidth: 900,
           height: "100%",
           paddingLeft: "15%",
           paddingRight: "15%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          fontFamily: "Roboto, system-ui, sans-serif",
           color: "#0A0A0A",
         }}
       >
@@ -79,7 +77,7 @@ export function HomeScreen({
             width: "100%",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
+            alignItems: "stretch",
           }}
         >
           <input
@@ -104,14 +102,14 @@ export function HomeScreen({
             type="button" // Type button para que no dispare submit
             onClick={() => {}}
             style={{
-              marginTop: 16,
+              marginTop: 12,
               background: "none",
               border: "none",
               fontSize: 12,
-              fontFamily: "inherit",
               textDecoration: "underline",
               cursor: "pointer",
               opacity: 0.5,
+              alignSelf: "flex-start",
             }}
           >
             Olvidaste la contraseña?
@@ -127,6 +125,7 @@ export function HomeScreen({
               color: "#ffffff",
               fontWeight: 700,
               cursor: "pointer",
+              fontSize: 18,
             }}
           >
             Ingresar
@@ -146,7 +145,6 @@ export function HomeScreen({
             alignItems: "center",
             gap: 4,
             fontSize: 14,
-            fontFamily: "inherit",
           }}
         >
           <span>No tienes cuenta aún?</span>
@@ -159,7 +157,6 @@ export function HomeScreen({
               textDecoration: "underline",
               cursor: "pointer",
               color: "#0A0A0A",
-              fontFamily: "inherit",
             }}
           >
             Regístrate

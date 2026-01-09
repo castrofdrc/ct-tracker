@@ -12,6 +12,8 @@ import { useNetworkStatus } from "./ui/useNetworkStatus";
 import { HomeScreen } from "./ui/screens/HomeScreen";
 import { MainScreen } from "./ui/screens/MainScreen";
 import { SettingsScreen } from "./ui/screens/SettingsScreen";
+import { LoadingScreen } from "./ui/screens/LoadingScreen";
+import { NewOperationScreen } from "./ui/screens/NewOperationScreen";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -62,7 +64,7 @@ function App() {
   };
 
   if (authLoading) {
-    return <div>Cargando sesión...</div>;
+    return <LoadingScreen />;
   }
 
   if (!user) {
@@ -101,6 +103,7 @@ function App() {
       <ProjectContext.Provider value={project}>
         {screen === "main" && <MainScreen />}
         {screen === "settings" && <SettingsScreen />}
+        {screen === "newAction" && <NewOperationScreen />}
       </ProjectContext.Provider>
     </UIContext.Provider>
   );

@@ -45,7 +45,7 @@ export function MainScreen() {
             }}
             onClick={() => {
               ui.setAddActionButton(false);
-              console.log("Nueva operación");
+              ui.goTo("newAction");
             }}
           >
             Nueva operación

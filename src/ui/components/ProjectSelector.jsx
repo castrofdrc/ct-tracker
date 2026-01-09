@@ -3,6 +3,7 @@ import { UIContext } from "../../ui/UIContext";
 import { useAuth } from "../../auth/useAuth";
 import { useProjects } from "../../project/useProjects";
 import { listenToUser } from "../../services/users.service";
+import { LoadingScreen } from "../../ui/screens/LoadingScreen";
 
 export function ProjectSelector() {
   const ui = useContext(UIContext);
@@ -26,7 +27,8 @@ export function ProjectSelector() {
     return () => unsubscribe?.();
   }, [user?.uid]);
 
-  if (loading) return <div>Cargando proyectos...</div>;
+  if (loading) return <LoadingScreen />;
+
   if (!projects || projects.length === 0)
     return <div>No tienes proyectos asignados</div>;
 
@@ -51,22 +53,16 @@ export function ProjectSelector() {
       <div
         style={{
           width: "100%",
-          maxWidth: 430,
+          maxWidth: 900,
           height: "100%",
           paddingLeft: "15%",
           paddingRight: "15%",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          fontFamily: "Roboto, system-ui, sans-serif",
           color: "#0A0A0A",
         }}
       >
-        {/* CAMBIO CLAVE:
-           height: 200 -> Intenta dar 200px de aire superior.
-           flexShrink: 1 -> Si la pantalla es chica, se encoge.
-           minHeight: 40 -> Nunca será menor a 40px para no pegar el texto al techo.
-        */}
         <div style={{ height: 200, flexShrink: 1, minHeight: 40 }} />
 
         {/* Bienvenida */}
@@ -107,6 +103,7 @@ export function ProjectSelector() {
             display: "flex",
             flexDirection: "column",
             gap: 20,
+            alignItems: "stretch",
           }}
         >
           {visibleProjects.map((p) => (
@@ -125,6 +122,8 @@ export function ProjectSelector() {
                 fontWeight: 600,
                 cursor: "pointer",
                 color: "#0A0A0A",
+                textAlign: "left",
+                padding: "0 20px",
               }}
             >
               {p.name || p.id}

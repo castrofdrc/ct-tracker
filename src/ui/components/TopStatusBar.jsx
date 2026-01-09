@@ -13,7 +13,7 @@ export function TopStatusBar({ projectId }) {
           top: "calc(8px + env(safe-area-inset-top))",
           left: 8,
           right: 8,
-          height: 38,
+          height: 32,
           zIndex: 100,
           background: "#ffffff",
           borderRadius: "10px",
@@ -22,8 +22,6 @@ export function TopStatusBar({ projectId }) {
           display: "flex",
           alignItems: "center",
           fontSize: "0.85em",
-          fontFamily:
-            "Roboto, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         }}
       >
         <div
@@ -53,8 +51,6 @@ export function TopStatusBar({ projectId }) {
             fontSize: "0.8em",
             textAlign: "center", // Mejor centrado en móvil
             textShadow: "0 0 2px white", // Legibilidad sobre mapa
-            fontFamily:
-              "Roboto, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
           }}
         >
           Sin conexión, cambios pendientes
