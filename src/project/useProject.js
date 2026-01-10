@@ -4,8 +4,8 @@ import {
   createCamera,
   placeCamera,
   removeCamera,
-  relocateCamera,
 } from "../services/cameras.service";
+
 import {
   listenToOperations,
   createMaintenance,
@@ -143,13 +143,8 @@ export function useProject({ projectId, authLoading, user }) {
     return createCamera(cameraId, projectId);
   };
 
-  const placeCameraForProject = (cameraId) => {
-    return placeCamera(cameraId, projectId);
-  };
-
-  const relocateCameraForProject = (cameraId, lat, lng) => {
-    const ops = operationsByCamera[cameraId] || [];
-    return relocateCamera(cameraId, projectId, lat, lng, ops);
+  const placeCameraForProject = (cameraId, lat, lng) => {
+    return placeCamera(cameraId, projectId, lat, lng);
   };
 
   const maintenanceCameraForProject = (cameraId, maintenanceType) => {
@@ -180,7 +175,6 @@ export function useProject({ projectId, authLoading, user }) {
     usersById,
     createCamera: createCameraForProject,
     placeCamera: placeCameraForProject,
-    relocateCamera: relocateCameraForProject,
     maintenanceCamera: maintenanceCameraForProject,
     removeCamera: removeCameraForProject,
   };

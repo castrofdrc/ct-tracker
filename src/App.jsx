@@ -14,6 +14,7 @@ import { MainScreen } from "./ui/screens/MainScreen";
 import { SettingsScreen } from "./ui/screens/SettingsScreen";
 import { LoadingScreen } from "./ui/screens/LoadingScreen";
 import { NewOperationScreen } from "./ui/screens/NewOperationScreen";
+import { MapPickerScreen } from "./ui/screens/MapPickerScreen";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -104,6 +105,7 @@ function App() {
         {screen === "main" && <MainScreen />}
         {screen === "settings" && <SettingsScreen />}
         {screen === "newAction" && <NewOperationScreen />}
+        {/* {screen === "mapPicker" && <MapPickerScreen />}*/}
       </ProjectContext.Provider>
     </UIContext.Provider>
   );

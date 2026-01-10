@@ -15,10 +15,7 @@ export function MainScreen() {
       <BottomActionBar />
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
-        <CameraMap
-          cameras={project.cameras}
-          onRelocate={project.relocateCamera}
-        />
+        <CameraMap cameras={project.cameras} />
       </div>
       {ui.addActionButton && (
         <div

@@ -24,7 +24,6 @@ export function deriveCameraState(operations = []) {
       return "inactive";
 
     case "placement":
-    case "relocation":
     case "maintenance":
       return "active";
 

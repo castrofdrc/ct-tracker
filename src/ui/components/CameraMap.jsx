@@ -2,13 +2,12 @@ import { useContext } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import { UIContext } from "../UIContext";
 import { FitBounds } from "./FitBounds";
-import { MapClickHandler } from "./MapClickHandler";
 import { CenterOnCamera } from "./CenterOnCamera";
 
 const DEFAULT_CENTER = [-34.6, -58.4];
 const DEFAULT_ZOOM = 6;
 
-export function CameraMap({ cameras, onRelocate }) {
+export function CameraMap({ cameras }) {
   const { setSelectedCameraId, selectedCameraId } = useContext(UIContext);
 
   const selectedCamera = cameras.find((c) => c.id === selectedCameraId);
@@ -41,8 +40,6 @@ export function CameraMap({ cameras, onRelocate }) {
         camerasWithLocation.length <= 1 && (
           <CenterOnCamera camera={selectedCamera} />
         )}
-
-      <MapClickHandler onRelocate={onRelocate} />
 
       {camerasWithLocation.map((camera) => (
         <Marker

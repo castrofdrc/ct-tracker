@@ -5,16 +5,11 @@ import {
   onSnapshot,
   doc,
   setDoc,
-  getDoc,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { createOperation } from "./operations.service";
 import { addLocation } from "./locations.service";
-import {
-  assertHasBeenPlaced,
-  assertNotRemoved,
-} from "../domain/operationGuards";
 
 export function listenToCameras(projectId, onChange, onError) {
   const q = query(
@@ -48,29 +43,22 @@ export async function createCamera(cameraId, projectId) {
   await createOperation(cameraId, projectId, "deploy", {});
 }
 
-export async function relocateCamera(
-  cameraId,
-  projectId,
-  lat,
-  lng,
-  operations = [],
-) {
-  assertHasBeenPlaced(operations);
-  assertNotRemoved(operations);
+export async function placeCamera(cameraId, projectId, lat, lng) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    throw new Error("Placement requiere ubicación válida");
+  }
 
-  await createOperation(cameraId, projectId, "relocation");
+  // 1. Crear operación placement (esto activa la cámara)
+  await createOperation(cameraId, projectId, "placement");
 
+  // 2. Registrar ubicación inicial
   await addLocation({
     cameraId,
     projectId,
     lat,
     lng,
-    originOperation: "relocation",
+    originOperation: "placement",
   });
-}
-
-export async function placeCamera(cameraId, projectId) {
-  await createOperation(cameraId, projectId, "placement");
 }
 
 export async function removeCamera(cameraId, projectId) {

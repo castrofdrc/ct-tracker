@@ -13,11 +13,14 @@ export function NewOperationScreen() {
   const selectedCamera = project.cameras.find((c) => c.id === selectedCameraId);
   const [selectedOperation, setSelectedOperation] = useState(null);
 
-  const [maintenanceType, setMaintenanceType] = useState(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
-  const [relocationMode, setRelocationMode] = useState(null);
-  const [manualLat, setManualLat] = useState("");
-  const [manualLng, setManualLng] = useState("");
+  const [lat, setLat] = useState("");
+  const [lng, setLng] = useState("");
+
+  const { pendingCameraState, setPendingCameraState } = ui;
+
+  const [maintenanceType, setMaintenanceType] = useState(null);
 
   const [confirmAction, setConfirmAction] = useState(false);
 
@@ -40,25 +43,52 @@ export function NewOperationScreen() {
     fontSize: 14,
   };
 
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) {
+      alert("El dispositivo no soporta geolocalización.");
+      return;
+    }
+
+    setGettingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLat(pos.coords.latitude.toFixed(6));
+        setLng(pos.coords.longitude.toFixed(6));
+        setGettingLocation(false);
+      },
+      () => {
+        setGettingLocation(false);
+        alert("No se pudo obtener la ubicación actual.");
+      },
+      { enableHighAccuracy: true },
+    );
+  };
+
   useEffect(() => {
-    // Cuando cambia la cámara:
     setSelectedOperation(null);
     setMaintenanceType(null);
-    setRelocationMode(null);
-    setManualLat("");
-    setManualLng("");
+    setLat("");
+    setLng("");
   }, [selectedCameraId]);
 
   useEffect(() => {
     // Cuando cambia la operación principal:
     setMaintenanceType(null);
-    setRelocationMode(null);
-    setManualLat("");
-    setManualLng("");
   }, [selectedOperation]);
 
   useEffect(() => {
+    if (pendingCameraState?.lat && pendingCameraState?.lng) {
+      setLat(pendingCameraState.lat.toFixed(6));
+      setLng(pendingCameraState.lng.toFixed(6));
+      setPendingCameraState({});
+    }
+  }, [pendingCameraState]);
+
+  useEffect(() => {
     setConfirmAction(false);
+    setLat("");
+    setLng("");
   }, [selectedCameraId, selectedOperation]);
 
   return (
@@ -218,23 +248,6 @@ export function NewOperationScreen() {
                   style={{
                     ...actionButtonStyle,
                     background:
-                      selectedOperation === "relocation"
-                        ? "#f5f5f5"
-                        : "#ffffff",
-                  }}
-                  onClick={() => {
-                    setSelectedOperation("relocation");
-                    setMaintenanceType(null);
-                    setRelocationMode(null);
-                  }}
-                >
-                  Relocalización
-                </button>
-
-                <button
-                  style={{
-                    ...actionButtonStyle,
-                    background:
                       selectedOperation === "removal" ? "#f5f5f5" : "#ffffff",
                   }}
                   onClick={() => {
@@ -315,7 +328,7 @@ export function NewOperationScreen() {
           </div>
         </div>
       )}
-
+      {/*
       {selectedOperation === "relocation" && (
         <div style={{ marginTop: 24 }}>
           <h2
@@ -401,7 +414,7 @@ export function NewOperationScreen() {
           Seleccioná una ubicación tocando el mapa. Se pedirá confirmación antes
           de aplicar.
         </div>
-      )}
+      )}*/}
 
       {selectedOperation === "removal" && (
         <div style={{ marginTop: 24 }}>
@@ -421,8 +434,51 @@ export function NewOperationScreen() {
       {selectedOperation === "placement" && (
         <div style={{ marginTop: 24 }}>
           <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 12 }}>
-            La cámara será colocada en campo y pasará a estado activa.
+            Ingresá la ubicación de la cámara.
           </div>
+
+          <button
+            onClick={useCurrentLocation}
+            disabled={gettingLocation}
+            style={{
+              ...actionButtonStyle,
+              opacity: gettingLocation ? 0.5 : 1,
+            }}
+          >
+            {gettingLocation
+              ? "Obteniendo ubicación…"
+              : "Usar ubicación actual"}
+          </button>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              marginBottom: 16,
+            }}
+          >
+            <input
+              placeholder="Latitud"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              style={inputStyle}
+            />
+
+            <input
+              placeholder="Longitud"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              style={inputStyle}
+            />
+          </div>
+
+          {/* <button
+            onClick={() => ui.goTo("mapPicker")}
+            style={actionButtonStyle}
+          >
+            Elegir en el mapa
+          </button>*/}
 
           <button
             onClick={() => setConfirmAction(true)}
@@ -457,13 +513,31 @@ export function NewOperationScreen() {
             </button>
 
             <button
-              onClick={() => {
-                // acá NO ejecutamos nada todavía
-                setConfirmAction(false);
-              }}
-              style={{
-                ...actionButtonStyle,
-                background: "#f5f5f5",
+              onClick={async () => {
+                try {
+                  if (selectedOperation === "placement") {
+                    const latNum = Number(lat);
+                    const lngNum = Number(lng);
+
+                    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
+                      alert("Latitud y longitud inválidas.");
+                      return;
+                    }
+
+                    await project.placeCamera(selectedCameraId, latNum, lngNum);
+
+                    ui.goTo("main");
+                  }
+
+                  if (selectedOperation === "removal") {
+                    await project.removeCamera(selectedCameraId);
+                    ui.goTo("main");
+                  }
+                } catch (err) {
+                  alert(err.message);
+                } finally {
+                  setConfirmAction(false);
+                }
               }}
             >
               Confirmar
