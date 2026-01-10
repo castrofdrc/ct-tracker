@@ -59,7 +59,7 @@ export function MainScreen() {
             }}
             onClick={() => {
               ui.setAddActionButton(false);
-              console.log("Nueva cámara");
+              ui.goTo("newCamera");
             }}
           >
             Nueva cámara

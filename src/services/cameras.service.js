@@ -35,7 +35,6 @@ export async function createCamera(cameraId, projectId) {
 
   await setDoc(ref, {
     projectId,
-    status: "inactive",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

@@ -19,6 +19,7 @@ export function useUI() {
     "cameraList",
     "settings",
     "mapPicker",
+    "newCamera",
   ];
 
   const goTo = (screen) => {
