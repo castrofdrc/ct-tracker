@@ -8,10 +8,11 @@ export function NewOperationScreen() {
 
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedCameraId, setSelectedCameraId] = useState(null);
+  const { selectedCameraId, setSelectedCameraId } = ui;
 
   const selectedCamera = project.cameras.find((c) => c.id === selectedCameraId);
-  const [selectedOperation, setSelectedOperation] = useState(null);
+  const { pendingOperation, setPendingOperation } = ui;
+  const selectedOperation = pendingOperation;
 
   const [gettingLocation, setGettingLocation] = useState(false);
 
@@ -66,10 +67,26 @@ export function NewOperationScreen() {
   };
 
   useEffect(() => {
-    setSelectedOperation(null);
+    if (ui.activeScreen !== "newAction") return;
+
+    if (ui.returningFromMap) {
+      // Venimos del map picker → NO resetear flujo
+      ui.setReturningFromMap(false);
+      return;
+    }
+
+    // Entrada nueva desde MainScreen → reset total
+    ui.setSelectedCameraId(null);
+    ui.setPendingOperation(null);
+
     setMaintenanceType(null);
     setLat("");
     setLng("");
+    setConfirmAction(false);
+  }, [ui.activeScreen]);
+
+  useEffect(() => {
+    setMaintenanceType(null);
   }, [selectedCameraId]);
 
   useEffect(() => {
@@ -87,8 +104,6 @@ export function NewOperationScreen() {
 
   useEffect(() => {
     setConfirmAction(false);
-    setLat("");
-    setLng("");
   }, [selectedCameraId, selectedOperation]);
 
   return (
@@ -237,7 +252,8 @@ export function NewOperationScreen() {
                         : "#ffffff",
                   }}
                   onClick={() => {
-                    setSelectedOperation("maintenance");
+                    setPendingOperation("maintenance");
+
                     setMaintenanceType(null);
                   }}
                 >
@@ -251,7 +267,8 @@ export function NewOperationScreen() {
                       selectedOperation === "removal" ? "#f5f5f5" : "#ffffff",
                   }}
                   onClick={() => {
-                    setSelectedOperation("removal");
+                    setPendingOperation("removal");
+
                     setMaintenanceType(null);
                   }}
                 >
@@ -260,7 +277,7 @@ export function NewOperationScreen() {
               </>
             )}
 
-            {selectedCamera.derivedState === "inactive" && (
+            {selectedCamera?.derivedState === "inactive" && (
               <button
                 style={{
                   ...actionButtonStyle,
@@ -268,7 +285,7 @@ export function NewOperationScreen() {
                     selectedOperation === "placement" ? "#f5f5f5" : "#ffffff",
                 }}
                 onClick={() => {
-                  setSelectedOperation("placement");
+                  ui.setPendingOperation("placement");
                   setMaintenanceType(null);
                 }}
               >
@@ -324,6 +341,19 @@ export function NewOperationScreen() {
               }}
             >
               Pilas y memoria
+            </button>
+
+            <button
+              onClick={() => {
+                if (!maintenanceType) {
+                  alert("Seleccioná el tipo de mantenimiento.");
+                  return;
+                }
+                setConfirmAction(true);
+              }}
+              style={actionButtonStyle}
+            >
+              Confirmar mantenimiento
             </button>
           </div>
         </div>
@@ -437,19 +467,6 @@ export function NewOperationScreen() {
             Ingresá la ubicación de la cámara.
           </div>
 
-          <button
-            onClick={useCurrentLocation}
-            disabled={gettingLocation}
-            style={{
-              ...actionButtonStyle,
-              opacity: gettingLocation ? 0.5 : 1,
-            }}
-          >
-            {gettingLocation
-              ? "Obteniendo ubicación…"
-              : "Usar ubicación actual"}
-          </button>
-
           <div
             style={{
               display: "flex",
@@ -473,12 +490,25 @@ export function NewOperationScreen() {
             />
           </div>
 
-          {/* <button
+          <button
+            onClick={useCurrentLocation}
+            disabled={gettingLocation}
+            style={{
+              ...actionButtonStyle,
+              opacity: gettingLocation ? 0.5 : 1,
+            }}
+          >
+            {gettingLocation
+              ? "Obteniendo ubicación…"
+              : "Usar ubicación actual"}
+          </button>
+
+          <button
             onClick={() => ui.goTo("mapPicker")}
             style={actionButtonStyle}
           >
             Elegir en el mapa
-          </button>*/}
+          </button>
 
           <button
             onClick={() => setConfirmAction(true)}
@@ -532,6 +562,23 @@ export function NewOperationScreen() {
                   if (selectedOperation === "removal") {
                     await project.removeCamera(selectedCameraId);
                     ui.goTo("main");
+                  }
+
+                  if (selectedOperation === "maintenance") {
+                    if (!maintenanceType) {
+                      alert("Seleccioná el tipo de mantenimiento.");
+                      return;
+                    }
+
+                    try {
+                      await project.maintenanceCamera(
+                        selectedCameraId,
+                        maintenanceType,
+                      );
+                      ui.goTo("main");
+                    } catch (err) {
+                      alert(err.message);
+                    }
                   }
                 } catch (err) {
                   alert(err.message);

@@ -106,7 +106,7 @@ function App() {
         {screen === "main" && <MainScreen />}
         {screen === "settings" && <SettingsScreen />}
         {screen === "newAction" && <NewOperationScreen />}
-        {/* {screen === "mapPicker" && <MapPickerScreen />}*/}
+        {screen === "mapPicker" && <MapPickerScreen />}
         {screen === "newCamera" && <NewCameraScreen />}
       </ProjectContext.Provider>
     </UIContext.Provider>

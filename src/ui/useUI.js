@@ -8,6 +8,9 @@ export function useUI() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [pendingCameraState, setPendingCameraState] = useState({});
+  const [pendingOperation, setPendingOperation] = useState(null);
+  const [returningFromMap, setReturningFromMap] = useState(false);
+
   const [activeScreen, setActiveScreen] = useState("home");
   const [addActionButton, setAddActionButton] = useState(false);
 
@@ -83,5 +86,11 @@ export function useUI() {
 
     pendingCameraState,
     setPendingCameraState,
+
+    pendingOperation,
+    setPendingOperation,
+
+    returningFromMap,
+    setReturningFromMap,
   };
 }

@@ -56,7 +56,6 @@ export async function createMaintenance(
 
   assertCameraIsActive(operations);
   assertNotRemoved(operations);
-  assertCameraIsActive(operations);
 
   return createOperation(cameraId, projectId, "maintenance", {
     maintenanceType,

@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import { listenToUser } from "../services/users.service";
+import { deriveCameraState } from "../domain/deriveCameraState";
+
 import {
   listenToCameras,
   createCamera,
@@ -10,12 +13,11 @@ import {
   listenToOperations,
   createMaintenance,
 } from "../services/operations.service";
+
 import {
   listenToLastLocation,
   listenToLocations,
 } from "../services/locations.service";
-import { listenToUser } from "../services/users.service";
-import { deriveCameraState } from "../domain/deriveCameraState";
 
 export function useProject({ projectId, authLoading, user }) {
   const [cameras, setCameras] = useState([]);
@@ -147,13 +149,13 @@ export function useProject({ projectId, authLoading, user }) {
     return placeCamera(cameraId, projectId, lat, lng);
   };
 
+  const removeCameraForProject = (cameraId) => {
+    return removeCamera(cameraId, projectId);
+  };
+
   const maintenanceCameraForProject = (cameraId, maintenanceType) => {
     const ops = operationsByCamera[cameraId] || [];
     return createMaintenance(cameraId, projectId, maintenanceType, ops);
-  };
-
-  const removeCameraForProject = (cameraId) => {
-    return removeCamera(cameraId, projectId);
   };
 
   const camerasWithDerivedState = cameras.map((camera) => {

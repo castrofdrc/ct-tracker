@@ -2,8 +2,8 @@ import { useContext, useState } from "react";
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import { UIContext } from "../UIContext";
 import { ProjectContext } from "../../project/ProjectContext";
-import { FitBounds } from "../components/FitBounds";
 import { MapClickHandler } from "../components/MapClickHandler";
+import { FitBounds } from "../components/FitBounds";
 
 const FALLBACK_CENTER = [-34.6, -58.4];
 const FALLBACK_ZOOM = 6;
@@ -12,10 +12,10 @@ export function MapPickerScreen() {
   const ui = useContext(UIContext);
   const project = useContext(ProjectContext);
   const [picked, setPicked] = useState(null);
-  console.log("CAMERAS:", project.cameras);
 
   const camerasWithLocation = project.cameras.filter(
     (c) =>
+      c.derivedState === "active" &&
       c.location &&
       Number.isFinite(c.location.lat) &&
       Number.isFinite(c.location.lng),
@@ -23,20 +23,20 @@ export function MapPickerScreen() {
 
   return (
     <div style={{ position: "fixed", inset: 0, background: "#fff" }}>
-      <div style={{ height: 56, display: "flex", alignItems: "center" }}>
-        <button
-          onClick={() => ui.goTo("newAction")}
-          style={{ fontSize: 16, fontWeight: 600, marginLeft: 12 }}
-        >
+      <div style={{ height: 48, display: "flex", alignItems: "center" }}>
+        <button onClick={() => ui.goTo("newAction")} style={{ marginLeft: 12 }}>
           ← Elegir ubicación
         </button>
       </div>
 
-      <div style={{ position: "fixed", inset: "56px 0 0 0" }}>
+      <div style={{ position: "fixed", inset: "48px 0 0 0" }}>
         <MapContainer
-          center={FALLBACK_CENTER}
-          zoom={FALLBACK_ZOOM}
           style={{ height: "100%", width: "100%" }}
+          whenCreated={(map) => {
+            if (camerasWithLocation.length === 0) {
+              map.setView(FALLBACK_CENTER, FALLBACK_ZOOM);
+            }
+          }}
         >
           <TileLayer
             attribution="&copy; OpenStreetMap contributors"
@@ -63,28 +63,18 @@ export function MapPickerScreen() {
             position: "fixed",
             left: 12,
             right: 12,
-            bottom: "calc(12px + env(safe-area-inset-bottom))",
-            background: "#fff",
-            border: "1px solid #000",
-            borderRadius: 12,
-            padding: 12,
+            bottom: 12,
           }}
         >
           <button
             onClick={() => {
-              ui.setPendingCameraState({
-                lat: picked.lat,
-                lng: picked.lng,
-              });
+              ui.setPendingCameraState(picked);
+              ui.setReturningFromMap(true);
               ui.goTo("newAction");
             }}
             style={{
               width: "100%",
               height: 44,
-              borderRadius: 8,
-              border: "1px solid #000",
-              background: "#fff",
-              fontWeight: 600,
             }}
           >
             Confirmar ubicación
