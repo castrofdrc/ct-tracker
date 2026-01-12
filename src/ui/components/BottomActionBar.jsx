@@ -11,19 +11,24 @@ export function BottomActionBar() {
     <div
       style={{
         position: "fixed",
-        // Suma el área segura del home indicator
         bottom: "calc(12px + env(safe-area-inset-bottom))",
         left: 12,
         right: 12,
-        height: 56,
+        height: 48,
         zIndex: 100,
-        background: "#ffffff",
-        borderRadius: "14px",
-        border: "1px solid #000",
+
+        // Effecto blur
+        background: "rgba(255, 255, 255, 0.4)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
+        // Effecto blur
+
+        borderRadius: "8px",
+        border: "1px solid #0a0a0a",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 40px",
+        padding: "0 48px",
       }}
     >
       <button
@@ -55,8 +60,6 @@ export function BottomActionBar() {
         style={{
           width: 44,
           height: 44,
-          padding: 0,
-
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -66,8 +69,8 @@ export function BottomActionBar() {
           src={addIcon}
           alt="Agregar"
           style={{
-            width: 36,
-            height: 36,
+            width: 54,
+            height: 54,
           }}
         />
       </button>

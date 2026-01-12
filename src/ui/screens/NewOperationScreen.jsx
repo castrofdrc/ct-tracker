@@ -13,6 +13,8 @@ export function NewOperationScreen() {
   const { pendingOperation, setPendingOperation } = ui;
   const selectedOperation = pendingOperation;
 
+  const [locationMethod, setLocationMethod] = useState(null);
+
   const [gettingLocation, setGettingLocation] = useState(false);
 
   const [lat, setLat] = useState("");
@@ -42,6 +44,7 @@ export function NewOperationScreen() {
     fontSize: 14,
     width: "100%",
     textAlign: "left",
+    outline: "none",
   };
 
   const subtitleStyle = {
@@ -97,6 +100,7 @@ export function NewOperationScreen() {
     setLat("");
     setLng("");
     setPickedCameraId(null);
+    setLocationMethod(null);
   }, [ui.activeScreen]);
 
   useEffect(() => {
@@ -106,9 +110,18 @@ export function NewOperationScreen() {
   }, [selectedOperation]);
 
   useEffect(() => {
+    if (ui.returningFromMap) return;
+
+    if (selectedOperation !== "placement") {
+      setLocationMethod(null);
+    }
+  }, [selectedOperation]);
+
+  useEffect(() => {
     if (pendingCameraState?.lat && pendingCameraState?.lng) {
       setLat(pendingCameraState.lat.toFixed(6));
       setLng(pendingCameraState.lng.toFixed(6));
+      setLocationMethod("map"); // ← ESTA ES LA CLAVE
       setPendingCameraState({});
     }
   }, [pendingCameraState]);
@@ -121,8 +134,8 @@ export function NewOperationScreen() {
         background: "#ffffff",
         paddingLeft: "15%",
         paddingRight: "15%",
-        paddingTop: "clamp(96px, 18vh, 73px)",
-        paddingBottom: "clamp(72px, 14vh, 73px)",
+        paddingTop: "clamp(30px, 15vh, 48px)",
+        paddingBottom: "clamp(30px, 15vh, 48px)",
         display: "flex",
         flexDirection: "column",
       }}
@@ -355,32 +368,51 @@ export function NewOperationScreen() {
                   La cámara será retirada del campo y quedará inactiva.
                 </div>
               )}
-
               {selectedOperation === "placement" && (
-                <>
-                  <div style={{ fontSize: 14, opacity: 0.6 }}>
-                    Ingresá la ubicación de la cámara.
+                <div
+                  style={{
+                    marginTop: "clamp(32px, 5vh, 48px)",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  {/* Subtítulo */}
+                  <h2 style={subtitleStyle}>Ingresar ubicación</h2>
+
+                  {/* Lat / Long */}
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: 10,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <input
+                      placeholder="Lat"
+                      value={lat}
+                      onChange={(e) => setLat(e.target.value)}
+                      style={inputStyle}
+                    />
+
+                    <input
+                      placeholder="Long"
+                      value={lng}
+                      onChange={(e) => setLng(e.target.value)}
+                      style={inputStyle}
+                    />
                   </div>
 
-                  <input
-                    placeholder="Latitud"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    style={inputStyle}
-                  />
-
-                  <input
-                    placeholder="Longitud"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                    style={inputStyle}
-                  />
-
+                  {/* Botones */}
                   <button
-                    onClick={useCurrentLocation}
+                    onClick={() => {
+                      setLocationMethod("current");
+                      useCurrentLocation();
+                    }}
                     disabled={gettingLocation}
                     style={{
                       ...actionButtonStyle,
+                      background:
+                        locationMethod === "current" ? "#E4E4E4" : "#ffffff",
                       opacity: gettingLocation ? 0.5 : 1,
                     }}
                   >
@@ -390,12 +422,19 @@ export function NewOperationScreen() {
                   </button>
 
                   <button
-                    onClick={() => ui.goTo("mapPicker")}
-                    style={actionButtonStyle}
+                    onClick={() => {
+                      setLocationMethod("map");
+                      ui.goTo("mapPicker");
+                    }}
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        locationMethod === "map" ? "#E4E4E4" : "#ffffff",
+                    }}
                   >
                     Elegir en el mapa
                   </button>
-                </>
+                </div>
               )}
             </div>
           </div>

@@ -1,315 +1,236 @@
 # CT-Tracker
 
-CT-Tracker es una aplicación **mobile-first** y **offline-first** para la **gestión operativa de cámaras trampa (CT)** en campo.  
-Está diseñada para uso real por técnicos en terreno, con conectividad intermitente, priorizando simplicidad, consistencia de dominio y registro confiable de operaciones.
+CT-Tracker es una aplicación mobile-first orientada a la gestión operativa de cámaras trampa (CT) en campo. Permite visualizar cámaras sobre un mapa, consultar su estado y registrar operaciones de colocación, mantenimiento y retiro de forma controlada, consistente y trazable.
 
 ---
 
 ## Objetivo de la aplicación
 
-El objetivo principal de CT-Tracker es permitir:
-
-- Gestionar cámaras trampa en campo de forma operativa
-- Registrar **operaciones reales** sobre cada cámara
-- Mantener un **historial inmutable y confiable**
-- Derivar el estado de cada cámara **exclusivamente desde sus operaciones**
-- Evitar ambigüedades de uso (una sola forma válida de hacer cada cosa)
-- Funcionar correctamente **offline**, sincronizando luego
-
-CT-Tracker **no es**:
-- un dashboard analítico
-- una app de escritorio
-- una herramienta de edición masiva
-
-Es una herramienta de **trabajo en campo**, pensada para dispositivos móviles.
-
----
-
-## Principios fundamentales de diseño
-
-- **Offline-first**: las operaciones válidas no se bloquean por falta de conexión
-- **Event sourcing simple**: todo cambio relevante es una operación
-- **Estado derivado**: no se persiste estado calculable
-- **Una sola verdad**: no hay caminos alternativos para la misma acción
-- **UX defensiva**: la UI no permite operaciones inválidas
-
----
-
-## Modelo de dominio
-
-### Cámara Trampa (CT)
-
-Cada cámara existe como un documento en:
-
-*cameras/{cameraId}*
-
-Campos relevantes actuales:
-- `projectId`
-- `createdAt`
-
-Campos **eliminados conceptualmente**:
-- `status` (legacy)
-- `updatedAt`
-
-El documento de la cámara **no guarda estado operativo**.
-
----
-
-### Estado de la cámara (derivado)
-
-El estado de una CT se deriva **exclusivamente** a partir de sus operaciones, usando: 
-*deriveCameraState(operations)*
-
-Estados posibles:
-- `inactive`
-- `active`
-
----
-
-## Reglas definitivas de operación
-
-### Cámara INACTIVA
-
-- **ÚNICA operación válida**: `placement`
-- `placement`:
-  - activa la cámara
-  - **debe registrar una ubicación**
-  - no pueden existir cámaras activas sin ubicación
-
----
-
-### Cámara ACTIVA
-
-Operaciones válidas:
-- `maintenance`
-- `removal`
-
-- `maintenance`:
-  - no cambia el estado
-- `removal`:
-  - pasa la cámara a inactiva
-
----
-
-### Operaciones eliminadas
-
-- ❌ `relocation`  
-  Fue eliminada para evitar ambigüedad.
-  La relocalización se realiza mediante: 
-*removal → placement (con nueva ubicación)*
-
-No existen dos caminos para hacer lo mismo.
-
----
-
-## Operaciones (eventos)
-
-Las operaciones se almacenan en:
-
-*cameras/{cameraId}/operations/{operationId}*
-
-Son **append-only**.
-
-### Tipos de operación
-
-#### placement
-- Activa la cámara
-- Debe ir acompañada de una ubicación
-- No existe placement sin ubicación
-
-#### maintenance
-- Solo para cámaras activas
-- Subtipos:
-  - `battery`
-  - `sd`
-  - `both`
-- No cambia el estado
-
-#### removal
-- Solo para cámaras activas
-- Pasa la cámara a inactiva
-
----
-
-## Ubicaciones
-
-Las ubicaciones se almacenan en:
-
-*cameras/{cameraId}/locations/{locationId}*
-
-Características:
-- Historial completo (append-only)
-- Cada ubicación tiene:
-  - `lat`
-  - `lng`
-  - `originOperation` (placement)
-  - `createdAt`
-
-No existe un campo persistido `camera.location`.  
-La ubicación actual se obtiene escuchando la **última ubicación registrada**.
-
----
-
-## Arquitectura técnica
-
-### Backend
-- Firebase Firestore
-- Firebase Auth
-- Persistencia offline habilitada
-- Estrategia:
-  - last-write-wins
-  - sin resolución avanzada de conflictos (aceptado)
-
----
-
-### Dominio
-
-Ubicación: *src/domain/*
-
-Componentes clave:
-- `deriveCameraState`
-- `operationGuards`
-
-El dominio está considerado **cerrado**:
-- no se reescribe
-- no se duplica lógica en UI
-
----
-
-### Services
-
-Ubicación: *src/services/*
-
-Responsables de:
-- escritura en Firestore
-- validaciones de dominio
-- guards de operación
-
-Ninguna screen escribe directamente en Firestore.
-
----
-
-## UI y navegación
-
-### Principio central
-
-- Navegación declarativa
-- Una sola fuente de verdad: `activeScreen`
-- Cada pantalla es **full screen**
-- No existe layout web ni navegación híbrida
-
-Screens actuales:
-- `home`
-- `projects`
-- `main`
-- `newAction`
-- `mapPicker`
-- `settings`
-
----
-
-### MainScreen
-
-Pantalla central de la app.
-
-Contiene:
-- Mapa fullscreen
-- Barra superior de estado
-- Barra inferior de acciones
-
-Funciones:
-- Visualizar cámaras activas
-- Acceder a:
-  - Nueva operación
-  - Ajustes
-
----
-
-### NewOperationScreen
-
-Pantalla principal para operar cámaras.
-
-Características:
-- Selector de cámara
-- Operaciones mostradas según estado derivado
-- Flujos claros:
-  - Colocación (CT inactiva)
-  - Mantenimiento (CT activa)
-  - Retiro (CT activa)
-- Confirmación explícita
-- Se resetea correctamente entre operaciones
-
----
-
-### MapPickerScreen
-
-Pantalla dedicada solo al mapa para selección de ubicación.
-
-Características:
-- FitBounds a cámaras ya ubicadas
-- Click en mapa → marker
-- Confirmación explícita
-- Retorna a NewOperationScreen
-- No deja estado residual
+El objetivo principal de CT-Tracker es ofrecer una herramienta simple, robusta y sin estados ambiguos para registrar acciones reales realizadas sobre cámaras trampa en campo, minimizando errores operativos y mejorando la calidad del registro de datos espaciales y operativos.
+
+La app prioriza:
+- Flujo guiado y explícito (nada sucede sin confirmación final).
+- Una única fuente de verdad para navegación y estado.
+- Interfaz clara, mobile-first, sin layouts heredados de web.
+- Separación estricta entre selección, edición y confirmación.
 
 ---
 
 ## Estado actual del proyecto
 
-### Funcionalidad completa y estable
+La app se encuentra en una **etapa avanzada de pulido funcional y visual del flujo principal de operaciones**, con foco en la pantalla de creación de nuevas operaciones (`NewOperationScreen`).
 
-- Dominio definido y consistente
-- Eliminación total de `relocation`
-- Estado derivado desde operaciones
-- Placement atómico (operación + ubicación)
-- Maintenance funcional (3 tipos)
-- Removal funcional
-- Map Picker estable
-- Offline-first operativo
-- Firebase consistente
+Toda la lógica crítica de navegación, selección y confirmación está definida y funcionando de forma estable.
 
 ---
 
-### Funcionalidad pendiente (consciente)
+## Arquitectura general
 
-- Lista de cámaras (UI)
-- Historial de operaciones (UI)
-- Historial de ubicaciones (UI)
-- UI definitiva de creación de cámaras
-- Indicadores de “última actividad”
-- Pulido visual final
-
----
-
-## Próximos pasos recomendados (prioridad)
-
-### Alta
-1. UI de creación de cámara (simple y funcional)
-2. Lista de cámaras con:
-   - filtro por estado derivado
-   - orden por última actividad (derivada)
-
-### Media
-3. Historial de operaciones
-4. Historial de ubicaciones
-
-### Baja
-5. Pulido visual
-6. Micro-interacciones
-7. Animaciones
-8. Refinamiento UX
+### Contextos principales
+- **UIContext**
+  - Maneja navegación (`activeScreen`)
+  - Estados temporales de flujo (`selectedCameraId`, `pendingOperation`, `pendingCameraState`, `returningFromMap`)
+- **ProjectContext**
+  - Contiene las cámaras del proyecto
+  - Expone métodos de dominio:
+    - `placeCamera`
+    - `removeCamera`
+    - `maintenanceCamera`
 
 ---
 
-## Principios para continuar el desarrollo
+## Flujo principal: Nueva Operación
 
-- No persistir datos derivados
-- No duplicar lógica de dominio
-- No inventar caminos alternativos
-- Trabajar screen por screen
-- Si algo se rompe, volver atrás
+### Pantalla: `NewOperationScreen`
+
+Esta pantalla centraliza todo el flujo de registro de una operación y se divide conceptualmente en tres bloques:
+
+1. **Bloque fijo superior**
+2. **Bloque móvil de contenido**
+3. **Bloque fijo inferior (acciones)**
 
 ---
 
-CT-Tracker, en su estado actual, ya es **usable en campo**.
-El trabajo restante es principalmente **UI y presentación**, no estructural.
+### 1. Bloque fijo superior
+
+Siempre visible y estable:
+
+- **Título:** “NUEVA OPERACIÓN”
+- **Subtítulo dinámico:** “Seleccionar cámara” / “Cámara seleccionada”
+- **Input de cámara**
+  - Muestra la CT seleccionada
+  - Permite resetear la selección tocándolo
+
+Este bloque mantiene siempre la misma posición y espaciado, independientemente del estado del flujo.
+
+---
+
+### 2. Bloque móvil de contenido
+
+El contenido interno cambia según el estado del flujo, pero siempre vive dentro de un contenedor con altura fija y scroll interno.
+
+#### a) Selector de cámara (CT Picker)
+
+Se muestra cuando **no hay cámara confirmada**:
+
+- Buscador por ID
+- Lista scrollable de CT
+- Estado visual:
+  - CT seleccionada → fondo gris
+- La selección NO confirma la CT
+- La confirmación se realiza únicamente con el botón **Aceptar**
+
+No existen estados “zombi”: una CT nunca pasa a activa sin confirmación explícita.
+
+---
+
+#### b) Formulario de operación (con CT seleccionada)
+
+Una vez confirmada la CT, el contenido pasa al formulario de operación.
+
+##### Subtítulos
+Todos los subtítulos usan la misma estética:
+- Uppercase
+- Font-size 12
+- Margin inferior consistente
+Los bloques están separados entre sí por márgenes responsivos, no por gaps globales.
+
+---
+
+### Tipos de operación
+
+Dependen del estado actual de la cámara:
+
+#### CT activa
+- **Mantenimiento**
+- **Retiro**
+
+#### CT inactiva
+- **Colocación**
+
+La selección se refleja visualmente (botón gris), pero no ejecuta ninguna acción.
+
+---
+
+### Operación: Mantenimiento
+
+- Subtítulo: “Tipo de mantenimiento”
+- Opciones:
+  - Cambio de pilas
+  - Cambio de memoria
+  - Pilas y memoria
+- Selección visual persistente
+- No se ejecuta nada hasta confirmar
+
+---
+
+### Operación: Retiro
+
+- Texto descriptivo informativo
+- No requiere inputs adicionales
+
+---
+
+### Operación: Colocación (CT inactiva)
+
+Bloque visualmente equivalente al selector de mantenimiento, manteniendo coherencia estética.
+
+#### Subtítulo
+- “INGRESAR UBICACIÓN”
+
+#### Inputs
+- Latitud y Longitud
+- En la misma línea
+- Gap fijo de 10px
+- Redondeo visual a 6 decimales
+
+#### Métodos de ubicación
+- **Usar ubicación actual**
+- **Elegir en el mapa**
+
+Ambos:
+- Se comportan como opciones seleccionables
+- Se pintan de gris cuando están activos
+- Solo uno puede estar activo a la vez
+
+##### Uso del mapa
+- Navega a `mapPicker`
+- Al volver:
+  - Se recuperan lat/lng desde `pendingCameraState`
+  - Se marca automáticamente el método “mapa” como seleccionado
+- No se resetea el flujo al volver del mapa
+
+---
+
+### 3. Bloque fijo inferior
+
+Siempre visible, sin scroll:
+
+- **Cancelar**
+  - Vuelve al `MainScreen`
+  - No persiste cambios
+- **Aceptar**
+  - Función única y central
+  - Confirma TODA la operación completa
+  - No hay confirmaciones intermedias
+  - No existe “¿Confirmar acción?”
+
+El botón se habilita solo cuando:
+- Hay CT confirmada
+- Hay operación seleccionada
+- Se cumplen los requisitos específicos de cada operación
+
+---
+
+## Confirmación de operaciones
+
+Al presionar **Aceptar**:
+
+- **Colocación**
+  - `placeCamera(id, lat, lng)`
+- **Retiro**
+  - `removeCamera(id)`
+- **Mantenimiento**
+  - `maintenanceCamera(id, maintenanceType)`
+
+Si la operación es exitosa:
+- Se vuelve al `MainScreen`
+- Se muestra feedback no intrusivo (previsto)
+
+---
+
+## Comportamiento de resets
+
+- Al entrar desde `MainScreen`:
+  - Reset total del flujo
+- Al volver desde `mapPicker`:
+  - NO se resetea nada
+- Al cambiar de operación:
+  - Se limpian estados dependientes (ej: tipo de mantenimiento, método de ubicación)
+
+Esto garantiza coherencia y evita estados inconsistentes.
+
+---
+
+## Principios de diseño aplicados
+
+- Mobile-first real
+- Una sola fuente de verdad
+- Confirmación explícita
+- Cero estados implícitos
+- Estética consistente y predecible
+- Cambios incrementales sin romper funcionalidad existente
+
+---
+
+## Estado actual
+
+- Flujo principal de operaciones: **completo y estable**
+- UI pulida y coherente
+- Código sin estados zombi
+- Navegación clara
+- Base sólida para:
+  - Feedback visual post-acción
+  - Overlays
+  - Ajustes finos de UX
+  - Nuevas operaciones futuras

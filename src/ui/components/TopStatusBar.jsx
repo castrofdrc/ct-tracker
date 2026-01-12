@@ -9,15 +9,20 @@ export function TopStatusBar({ projectId }) {
       <div
         style={{
           position: "fixed",
-          // CAMBIO CRÍTICO: Suma el área segura del notch
           top: "calc(8px + env(safe-area-inset-top))",
           left: 8,
           right: 8,
           height: 32,
           zIndex: 100,
-          background: "#ffffff",
-          borderRadius: "10px",
-          border: "1px solid #000",
+
+          // Effecto blur
+          background: "rgba(255, 255, 255, 0.2)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          // Effecto blur
+
+          borderRadius: "6px",
+          border: "1px solid #0a0a0a",
           padding: "0 20px",
           display: "flex",
           alignItems: "center",
