@@ -6,7 +6,6 @@ export function NewOperationScreen() {
   const ui = useContext(UIContext);
   const project = useContext(ProjectContext);
 
-  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [search, setSearch] = useState("");
   const { selectedCameraId, setSelectedCameraId } = ui;
 
@@ -23,26 +22,41 @@ export function NewOperationScreen() {
 
   const [maintenanceType, setMaintenanceType] = useState(null);
 
-  const [confirmAction, setConfirmAction] = useState(false);
+  const [pickedCameraId, setPickedCameraId] = useState(null);
 
   const actionButtonStyle = {
-    height: 44,
+    height: 48,
     borderRadius: 8,
     border: "1px solid #0A0A0A",
-    background: "#ffffff",
-    fontSize: 15,
-    fontWeight: 500,
+    fontSize: 14,
     textAlign: "left",
     padding: "0 20px",
+    marginBottom: 10,
   };
 
   const inputStyle = {
-    height: 44,
+    height: 48,
     borderRadius: 8,
     border: "1px solid #0A0A0A",
     padding: "0 20px",
     fontSize: 14,
+    width: "100%",
+    textAlign: "left",
   };
+
+  const subtitleStyle = {
+    fontSize: 12,
+    fontWeight: 500,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  };
+
+  const canAccept =
+    selectedCameraId &&
+    selectedOperation &&
+    (selectedOperation !== "maintenance" || maintenanceType) &&
+    (selectedOperation !== "placement" ||
+      (Number.isFinite(+lat) && Number.isFinite(+lng)));
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -82,16 +96,13 @@ export function NewOperationScreen() {
     setMaintenanceType(null);
     setLat("");
     setLng("");
-    setConfirmAction(false);
+    setPickedCameraId(null);
   }, [ui.activeScreen]);
 
   useEffect(() => {
-    setMaintenanceType(null);
-  }, [selectedCameraId]);
-
-  useEffect(() => {
-    // Cuando cambia la operación principal:
-    setMaintenanceType(null);
+    if (selectedOperation !== "maintenance") {
+      setMaintenanceType(null);
+    }
   }, [selectedOperation]);
 
   useEffect(() => {
@@ -102,10 +113,6 @@ export function NewOperationScreen() {
     }
   }, [pendingCameraState]);
 
-  useEffect(() => {
-    setConfirmAction(false);
-  }, [selectedCameraId, selectedOperation]);
-
   return (
     <div
       style={{
@@ -114,11 +121,13 @@ export function NewOperationScreen() {
         background: "#ffffff",
         paddingLeft: "15%",
         paddingRight: "15%",
+        paddingTop: "clamp(96px, 18vh, 73px)",
+        paddingBottom: "clamp(72px, 14vh, 73px)",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <div style={{ height: 44, display: "flex", alignItems: "center" }}>
+      {/* <div style={{ height: 44, display: "flex", alignItems: "center" }}>
         <button
           onClick={() => ui.goTo("main")}
           style={{
@@ -130,235 +139,346 @@ export function NewOperationScreen() {
         >
           ← Nueva operación
         </button>
-      </div>
+      </div>*/}
 
-      <div style={{ flex: 1 }} />
-
-      <h2
-        style={{
-          fontSize: 14,
-          color: "#666",
-          margin: "0 0 8px 4px",
-          fontWeight: 500,
-          textTransform: "uppercase",
-          letterSpacing: "0.5px",
-        }}
-      >
-        Seleccionar CT
-      </h2>
-
-      <button
-        onClick={() => setIsPickerOpen(true)}
-        style={{
-          height: 55,
-          borderRadius: 8,
-          border: "1px solid #0A0A0A",
-          background: "#ffffff",
-          fontSize: 16,
-          fontWeight: 500,
-          textAlign: "left",
-          padding: "0 20px",
-          opacity: selectedCameraId ? 1 : 0.5,
-        }}
-      >
-        {selectedCameraId || "CT_001"}
-      </button>
-
-      {isPickerOpen && (
+      <div style={{ marginBottom: 20 }}>
         <div
           style={{
-            marginTop: 10,
-            border: "1px solid #0A0A0A",
-            borderRadius: 8,
-            maxHeight: 300,
-            overflowY: "auto",
-            background: "#ffffff",
+            fontSize: 20,
+            fontWeight: 800,
+            textTransform: "uppercase",
           }}
         >
-          {/* Buscador */}
-          <input
-            placeholder="Buscar CT…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              height: 44,
-              border: "none",
-              borderBottom: "1px solid #0A0A0A",
-              padding: "0 20px",
-              fontSize: 14,
-              boxSizing: "border-box",
-            }}
-          />
+          Nueva operación
+        </div>
+      </div>
 
-          {/* Lista */}
-          <div>
-            {project.cameras
-              .filter((c) => c.id.toLowerCase().includes(search.toLowerCase()))
-              .map((camera) => (
+      <div style={{ marginBottom: 20 }}>
+        <div style={subtitleStyle}>
+          {selectedCameraId ? "Cámara seleccionada" : "Seleccionar cámara"}
+        </div>
+
+        <button
+          onClick={() => {
+            setSelectedCameraId(null);
+          }}
+          style={inputStyle}
+        >
+          {selectedCameraId || "CT_001"}
+        </button>
+      </div>
+
+      {/* RENDER MÓVIL */}
+
+      <div
+        style={{
+          flex: 1,
+          minHeight: 200,
+          borderRadius: 8,
+          marginBottom: 40,
+          overflow: "hidden",
+        }}
+      >
+        {/* ===== PICKER CT ===== */}
+        {!selectedCameraId && (
+          <div
+            style={{
+              border: "1px solid #000",
+              borderRadius: 10,
+              overflow: "hidden",
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+            }}
+          >
+            <input
+              placeholder="Buscar..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+                height: 48,
+                padding: "0 16px",
+                border: "none",
+                borderBottom: "1px solid #000",
+                fontSize: 14,
+                outline: "none",
+              }}
+            />
+
+            <div style={{ flex: 1, overflowY: "auto" }}>
+              {project.cameras
+                .filter((c) =>
+                  c.id.toLowerCase().includes(search.toLowerCase()),
+                )
+                .map((camera) => (
+                  <button
+                    key={camera.id}
+                    onClick={() => setPickedCameraId(camera.id)}
+                    style={{
+                      width: "100%",
+                      height: 48,
+                      padding: "0 16px",
+                      border: "none",
+                      borderBottom: "1px solid #000",
+                      background:
+                        pickedCameraId === camera.id ? "#E4E4E4" : "#fff",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: 14,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span>{camera.id}</span>
+                    <span style={{ opacity: 0.7 }}>{camera.derivedState}</span>
+                  </button>
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== FORMULARIO OPERACIÓN ===== */}
+        {selectedCameraId && (
+          <div
+            style={{
+              height: "100%",
+              overflowY: "auto",
+            }}
+          >
+            <div
+              style={{
+                marginTop: "clamp(32px, 5vh, 48px)",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <h2 style={subtitleStyle}>Tipo de operación</h2>
+
+              {selectedCamera.derivedState === "active" && (
+                <>
+                  <button
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        selectedOperation === "maintenance"
+                          ? "#E4E4E4"
+                          : "#ffffff",
+                    }}
+                    onClick={() => {
+                      setPendingOperation("maintenance");
+                      setMaintenanceType(null);
+                    }}
+                  >
+                    Mantenimiento
+                  </button>
+
+                  <button
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        selectedOperation === "removal" ? "#E4E4E4" : "#ffffff",
+                    }}
+                    onClick={() => {
+                      setPendingOperation("removal");
+                      setMaintenanceType(null);
+                    }}
+                  >
+                    Retiro
+                  </button>
+                </>
+              )}
+
+              {selectedCamera.derivedState === "inactive" && (
                 <button
-                  key={camera.id}
-                  onClick={() => {
-                    setSelectedCameraId(camera.id);
-                    setIsPickerOpen(false);
-                    setSearch("");
-                  }}
                   style={{
-                    width: "100%",
-                    height: 44,
-                    border: "none",
-                    borderBottom: "1px solid #eee",
-                    background: "#ffffff",
-                    textAlign: "left",
-                    padding: "0 20px",
-                    fontSize: 14,
+                    ...actionButtonStyle,
+                    background:
+                      selectedOperation === "placement" ? "#E4E4E4" : "#ffffff",
+                  }}
+                  onClick={() => {
+                    setPendingOperation("placement");
+                    setMaintenanceType(null);
+                  }}
+                >
+                  Colocación
+                </button>
+              )}
+
+              {selectedOperation === "maintenance" && (
+                <div
+                  style={{
+                    marginTop: "clamp(32px, 5vh, 48px)",
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
+                    flexDirection: "column",
                   }}
                 >
-                  <span>{camera.id}</span>
-                  <span style={{ opacity: 0.5 }}>{camera.derivedState}</span>
-                </button>
-              ))}
+                  <h2 style={subtitleStyle}>Tipo de mantenimiento</h2>
+
+                  <button
+                    onClick={() => setMaintenanceType("battery")}
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        maintenanceType === "battery" ? "#E4E4E4" : "#ffffff",
+                    }}
+                  >
+                    Cambio de pilas
+                  </button>
+
+                  <button
+                    onClick={() => setMaintenanceType("sd")}
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        maintenanceType === "sd" ? "#E4E4E4" : "#ffffff",
+                    }}
+                  >
+                    Cambio de memoria
+                  </button>
+
+                  <button
+                    onClick={() => setMaintenanceType("both")}
+                    style={{
+                      ...actionButtonStyle,
+                      background:
+                        maintenanceType === "both" ? "#E4E4E4" : "#ffffff",
+                    }}
+                  >
+                    Pilas y memoria
+                  </button>
+                </div>
+              )}
+
+              {selectedOperation === "removal" && (
+                <div style={{ fontSize: 14, opacity: 0.6 }}>
+                  La cámara será retirada del campo y quedará inactiva.
+                </div>
+              )}
+
+              {selectedOperation === "placement" && (
+                <>
+                  <div style={{ fontSize: 14, opacity: 0.6 }}>
+                    Ingresá la ubicación de la cámara.
+                  </div>
+
+                  <input
+                    placeholder="Latitud"
+                    value={lat}
+                    onChange={(e) => setLat(e.target.value)}
+                    style={inputStyle}
+                  />
+
+                  <input
+                    placeholder="Longitud"
+                    value={lng}
+                    onChange={(e) => setLng(e.target.value)}
+                    style={inputStyle}
+                  />
+
+                  <button
+                    onClick={useCurrentLocation}
+                    disabled={gettingLocation}
+                    style={{
+                      ...actionButtonStyle,
+                      opacity: gettingLocation ? 0.5 : 1,
+                    }}
+                  >
+                    {gettingLocation
+                      ? "Obteniendo ubicación…"
+                      : "Usar ubicación actual"}
+                  </button>
+
+                  <button
+                    onClick={() => ui.goTo("mapPicker")}
+                    style={actionButtonStyle}
+                  >
+                    Elegir en el mapa
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {selectedCamera && (
-        <div style={{ marginTop: 30 }}>
-          <h2
-            style={{
-              fontSize: 14,
-              color: "#666",
-              margin: "0 0 8px 4px",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
-            Tipo de operación
-          </h2>
+      {/* BLOQUE FIJO 2 */}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            {selectedCamera.derivedState === "active" && (
-              <>
-                <button
-                  style={{
-                    ...actionButtonStyle,
-                    background:
-                      selectedOperation === "maintenance"
-                        ? "#f5f5f5"
-                        : "#ffffff",
-                  }}
-                  onClick={() => {
-                    setPendingOperation("maintenance");
+      <div style={{ display: "flex", gap: 20 }}>
+        <button
+          style={{
+            flex: 1,
+            height: 48,
+            borderRadius: 8,
+            border: "1px solid #000",
+            background: "#fff",
+            fontWeight: "bold",
+            fontSize: 14,
+          }}
+          onClick={() => ui.goTo("main")}
+        >
+          Cancelar
+        </button>
 
-                    setMaintenanceType(null);
-                  }}
-                >
-                  Mantenimiento
-                </button>
+        <button
+          style={{
+            flex: 1,
+            height: 48,
+            borderRadius: 8,
+            border: "1px solid #000",
+            background: "#0a0a0a",
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: 14,
+          }}
+          disabled={!pickedCameraId && !canAccept}
+          onClick={async () => {
+            // 1️⃣ Confirmar CT (NO ejecutar operación)
+            if (!selectedCameraId && pickedCameraId) {
+              setSelectedCameraId(pickedCameraId);
+              setPickedCameraId(null);
+              setSearch("");
+              return;
+            }
 
-                <button
-                  style={{
-                    ...actionButtonStyle,
-                    background:
-                      selectedOperation === "removal" ? "#f5f5f5" : "#ffffff",
-                  }}
-                  onClick={() => {
-                    setPendingOperation("removal");
+            // 2️⃣ Confirmar operación final
+            try {
+              if (selectedOperation === "placement") {
+                await project.placeCamera(
+                  selectedCameraId,
+                  Number(lat),
+                  Number(lng),
+                );
+              }
 
-                    setMaintenanceType(null);
-                  }}
-                >
-                  Retiro
-                </button>
-              </>
-            )}
+              if (selectedOperation === "removal") {
+                await project.removeCamera(selectedCameraId);
+              }
 
-            {selectedCamera?.derivedState === "inactive" && (
-              <button
-                style={{
-                  ...actionButtonStyle,
-                  background:
-                    selectedOperation === "placement" ? "#f5f5f5" : "#ffffff",
-                }}
-                onClick={() => {
-                  ui.setPendingOperation("placement");
-                  setMaintenanceType(null);
-                }}
-              >
-                Colocación
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+              if (selectedOperation === "maintenance") {
+                await project.maintenanceCamera(
+                  selectedCameraId,
+                  maintenanceType,
+                );
+              }
 
-      {selectedOperation === "maintenance" && (
-        <div style={{ marginTop: 24 }}>
-          <h2
-            style={{
-              fontSize: 14,
-              color: "#666",
-              margin: "0 0 8px 4px",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
-            Tipo de mantenimiento
-          </h2>
+              ui.goTo("main");
+            } catch (err) {
+              alert(err.message);
+            }
+          }}
+        >
+          Aceptar
+        </button>
+      </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <button
-              onClick={() => setMaintenanceType("battery")}
-              style={{
-                ...actionButtonStyle,
-                background:
-                  maintenanceType === "battery" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Cambio de pilas
-            </button>
+      <div style={{ height: 40 }} />
+    </div>
+  );
+}
 
-            <button
-              onClick={() => setMaintenanceType("sd")}
-              style={{
-                ...actionButtonStyle,
-                background: maintenanceType === "sd" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Cambio de memoria
-            </button>
-
-            <button
-              onClick={() => setMaintenanceType("both")}
-              style={{
-                ...actionButtonStyle,
-                background: maintenanceType === "both" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Pilas y memoria
-            </button>
-
-            <button
-              onClick={() => {
-                if (!maintenanceType) {
-                  alert("Seleccioná el tipo de mantenimiento.");
-                  return;
-                }
-                setConfirmAction(true);
-              }}
-              style={actionButtonStyle}
-            >
-              Confirmar mantenimiento
-            </button>
-          </div>
-        </div>
-      )}
-      {/*
+{
+  /*
       {selectedOperation === "relocation" && (
         <div style={{ marginTop: 24 }}>
           <h2
@@ -444,156 +564,5 @@ export function NewOperationScreen() {
           Seleccioná una ubicación tocando el mapa. Se pedirá confirmación antes
           de aplicar.
         </div>
-      )}*/}
-
-      {selectedOperation === "removal" && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 12 }}>
-            La cámara será retirada del campo y quedará inactiva.
-          </div>
-
-          <button
-            onClick={() => setConfirmAction(true)}
-            style={actionButtonStyle}
-          >
-            Confirmar retiro
-          </button>
-        </div>
-      )}
-
-      {selectedOperation === "placement" && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 14, opacity: 0.6, marginBottom: 12 }}>
-            Ingresá la ubicación de la cámara.
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 12,
-              marginBottom: 16,
-            }}
-          >
-            <input
-              placeholder="Latitud"
-              value={lat}
-              onChange={(e) => setLat(e.target.value)}
-              style={inputStyle}
-            />
-
-            <input
-              placeholder="Longitud"
-              value={lng}
-              onChange={(e) => setLng(e.target.value)}
-              style={inputStyle}
-            />
-          </div>
-
-          <button
-            onClick={useCurrentLocation}
-            disabled={gettingLocation}
-            style={{
-              ...actionButtonStyle,
-              opacity: gettingLocation ? 0.5 : 1,
-            }}
-          >
-            {gettingLocation
-              ? "Obteniendo ubicación…"
-              : "Usar ubicación actual"}
-          </button>
-
-          <button
-            onClick={() => ui.goTo("mapPicker")}
-            style={actionButtonStyle}
-          >
-            Elegir en el mapa
-          </button>
-
-          <button
-            onClick={() => setConfirmAction(true)}
-            style={actionButtonStyle}
-          >
-            Confirmar colocación
-          </button>
-        </div>
-      )}
-
-      {confirmAction && (
-        <div style={{ marginTop: 24 }}>
-          <div
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              marginBottom: 12,
-            }}
-          >
-            ¿Confirmar acción?
-          </div>
-
-          <div style={{ display: "flex", gap: 12 }}>
-            <button
-              onClick={() => setConfirmAction(false)}
-              style={{
-                ...actionButtonStyle,
-                background: "#ffffff",
-              }}
-            >
-              Cancelar
-            </button>
-
-            <button
-              onClick={async () => {
-                try {
-                  if (selectedOperation === "placement") {
-                    const latNum = Number(lat);
-                    const lngNum = Number(lng);
-
-                    if (!Number.isFinite(latNum) || !Number.isFinite(lngNum)) {
-                      alert("Latitud y longitud inválidas.");
-                      return;
-                    }
-
-                    await project.placeCamera(selectedCameraId, latNum, lngNum);
-
-                    ui.goTo("main");
-                  }
-
-                  if (selectedOperation === "removal") {
-                    await project.removeCamera(selectedCameraId);
-                    ui.goTo("main");
-                  }
-
-                  if (selectedOperation === "maintenance") {
-                    if (!maintenanceType) {
-                      alert("Seleccioná el tipo de mantenimiento.");
-                      return;
-                    }
-
-                    try {
-                      await project.maintenanceCamera(
-                        selectedCameraId,
-                        maintenanceType,
-                      );
-                      ui.goTo("main");
-                    } catch (err) {
-                      alert(err.message);
-                    }
-                  }
-                } catch (err) {
-                  alert(err.message);
-                } finally {
-                  setConfirmAction(false);
-                }
-              }}
-            >
-              Confirmar
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div style={{ height: 40 }} />
-    </div>
-  );
+      )}*/
 }
