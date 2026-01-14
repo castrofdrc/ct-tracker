@@ -43,14 +43,18 @@ export async function createCamera(cameraId, projectId) {
 }
 
 export async function placeCamera(cameraId, projectId, lat, lng) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-    throw new Error("Placement requiere ubicación válida");
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    throw new Error("Coordenadas inválidas. Lat: -90 a 90, Lng: -180 a 180");
   }
 
-  // 1. Crear operación placement (esto activa la cámara)
   await createOperation(cameraId, projectId, "placement");
-
-  // 2. Registrar ubicación inicial
   await addLocation({
     cameraId,
     projectId,

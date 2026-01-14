@@ -25,7 +25,7 @@ export function MapPickerScreen() {
     <div style={{ position: "fixed", inset: 0, background: "#fff" }}>
       <div style={{ height: 48, display: "flex", alignItems: "center" }}>
         <button onClick={() => ui.goTo("newAction")} style={{ marginLeft: 12 }}>
-          ← Elegir ubicación
+          ←
         </button>
       </div>
 
@@ -64,6 +64,9 @@ export function MapPickerScreen() {
             left: 12,
             right: 12,
             bottom: 12,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
           }}
         >
           <button
@@ -73,8 +76,15 @@ export function MapPickerScreen() {
               ui.goTo("newAction");
             }}
             style={{
-              width: "100%",
-              height: 44,
+              height: 48,
+              borderRadius: 8,
+              border: "1px solid #0A0A0A",
+              fontSize: 14,
+              textAlign: "left",
+              padding: "0 20px",
+              marginBottom: 10,
+              backgroundColor: "#fff",
+              color: "#0A0A0A",
             }}
           >
             Confirmar ubicación

@@ -27,10 +27,12 @@ export function useProject({ projectId, authLoading, user }) {
   const [locationsByCamera, setLocationsByCamera] = useState({});
 
   useEffect(() => {
-    // Reset explícito de estado al cambiar de proyecto
-    // Evita datos zombis entre proyectos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setCameras([]);
     setOperationsByCamera({});
+    setLastLocationsByCamera({});
+    setUsersById({});
+    setLocationsByCamera({});
   }, [projectId]);
 
   // Cámaras

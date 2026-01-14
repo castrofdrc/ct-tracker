@@ -9,8 +9,7 @@ import {
 // Configuración PRODUCCIÓN
 const firebaseConfig = {
   apiKey: "AIzaSyABvMWIccYCiHVTU7EuRVr8LSqHMm1RPCc",
-  authDomain:
-    "[ct-tracker-prod.firebaseapp.com](http://ct-tracker-prod.firebaseapp.com/)",
+  authDomain: "ct-tracker-prod.firebaseapp.com",
   projectId: "ct-tracker-prod",
   storageBucket: "ct-tracker-prod.firebasestorage.app",
   messagingSenderId: "698644808912",

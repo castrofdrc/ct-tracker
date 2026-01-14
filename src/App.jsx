@@ -43,28 +43,6 @@ function App() {
     authLoading,
   });
 
-  const handleCreateCamera = async () => {
-    if (!navigator.onLine) {
-      alert("Para crear una nueva cámara necesitás conexión.");
-      return;
-    }
-
-    if (!ui.newCameraId) return;
-
-    if (!/^CT_\d{3}$/.test(ui.newCameraId)) {
-      alert("Formato inválido. Usar CT_XXX (ej: CT_005)");
-      return;
-    }
-
-    try {
-      await project.createCamera(ui.newCameraId);
-      ui.setNewCameraId("");
-    } catch (err) {
-      console.error("Error creando cámara:", err);
-      alert("No se pudo crear la cámara.");
-    }
-  };
-
   if (authLoading) {
     return <LoadingScreen />;
   }

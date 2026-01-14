@@ -31,6 +31,29 @@ export function CameraMap({ cameras }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
+      {camerasWithLocation.length === 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            textAlign: "center",
+            padding: 20,
+            background: "rgba(255,255,255,0.9)",
+            borderRadius: 8,
+            zIndex: 1000,
+          }}
+        >
+          <div style={{ fontWeight: 600, marginBottom: 4 }}>
+            No hay cámaras activas
+          </div>
+          <div style={{ fontSize: 14, opacity: 0.6 }}>
+            Las cámaras aparecerán aquí después de ser colocadas
+          </div>
+        </div>
+      )}
+
       {camerasWithLocation.length > 1 && (
         <FitBounds cameras={camerasWithLocation} />
       )}
@@ -54,9 +77,9 @@ export function CameraMap({ cameras }) {
             <br />
             Ubicación:
             <br />
-            {camera.location.lat}
+            {camera.location.lat.toFixed(6)}
             <br />
-            {camera.location.lng}
+            {camera.location.lng.toFixed(6)}
           </Popup>
         </Marker>
       ))}

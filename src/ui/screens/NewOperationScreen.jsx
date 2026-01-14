@@ -54,12 +54,27 @@ export function NewOperationScreen() {
     marginBottom: 6,
   };
 
+  const isValidCoordinate = (latStr, lngStr) => {
+    const lat = parseFloat(latStr);
+    const lng = parseFloat(lngStr);
+
+    return (
+      !isNaN(lat) &&
+      !isNaN(lng) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lng >= -180 &&
+      lng <= 180 &&
+      latStr.trim() !== "" &&
+      lngStr.trim() !== ""
+    );
+  };
+
   const canAccept =
     selectedCameraId &&
     selectedOperation &&
     (selectedOperation !== "maintenance" || maintenanceType) &&
-    (selectedOperation !== "placement" ||
-      (Number.isFinite(+lat) && Number.isFinite(+lng)));
+    (selectedOperation !== "placement" || isValidCoordinate(lat, lng));
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) {
@@ -87,7 +102,6 @@ export function NewOperationScreen() {
     if (ui.activeScreen !== "newAction") return;
 
     if (ui.returningFromMap) {
-      // Venimos del map picker → NO resetear flujo
       ui.setReturningFromMap(false);
       return;
     }
@@ -101,6 +115,7 @@ export function NewOperationScreen() {
     setLng("");
     setPickedCameraId(null);
     setLocationMethod(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ui.activeScreen]);
 
   useEffect(() => {
@@ -115,16 +130,17 @@ export function NewOperationScreen() {
     if (selectedOperation !== "placement") {
       setLocationMethod(null);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedOperation]);
 
   useEffect(() => {
     if (pendingCameraState?.lat && pendingCameraState?.lng) {
       setLat(pendingCameraState.lat.toFixed(6));
       setLng(pendingCameraState.lng.toFixed(6));
-      setLocationMethod("map"); // ← ESTA ES LA CLAVE
+      setLocationMethod("map");
       setPendingCameraState({});
     }
-  }, [pendingCameraState]);
+  }, [pendingCameraState, setPendingCameraState]);
 
   return (
     <div
@@ -368,6 +384,13 @@ export function NewOperationScreen() {
                   La cámara será retirada del campo y quedará inactiva.
                 </div>
               )}
+
+              {selectedOperation === "placement" && (
+                <div style={{ fontSize: 14, opacity: 0.6 }}>
+                  La cámara será colocada en el campo y quedará activa.
+                </div>
+              )}
+
               {selectedOperation === "placement" && (
                 <div
                   style={{
@@ -514,94 +537,4 @@ export function NewOperationScreen() {
       <div style={{ height: 40 }} />
     </div>
   );
-}
-
-{
-  /*
-      {selectedOperation === "relocation" && (
-        <div style={{ marginTop: 24 }}>
-          <h2
-            style={{
-              fontSize: 14,
-              color: "#666",
-              margin: "0 0 8px 4px",
-              fontWeight: 500,
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
-            Método de relocalización
-          </h2>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <button
-              onClick={() => setRelocationMode("current")}
-              style={{
-                ...actionButtonStyle,
-                background:
-                  relocationMode === "current" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Usar ubicación actual
-            </button>
-
-            <button
-              onClick={() => setRelocationMode("manual")}
-              style={{
-                ...actionButtonStyle,
-                background: relocationMode === "manual" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Ingresar coordenadas
-            </button>
-
-            <button
-              onClick={() => setRelocationMode("map")}
-              style={{
-                ...actionButtonStyle,
-                background: relocationMode === "map" ? "#f5f5f5" : "#ffffff",
-              }}
-            >
-              Elegir en el mapa
-            </button>
-          </div>
-        </div>
-      )}
-
-      {relocationMode === "current" && (
-        <div style={{ marginTop: 16, fontSize: 13, opacity: 0.6 }}>
-          Se utilizará la ubicación actual del dispositivo.
-        </div>
-      )}
-
-      {relocationMode === "manual" && (
-        <div
-          style={{
-            marginTop: 16,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12,
-          }}
-        >
-          <input
-            placeholder="Latitud"
-            value={manualLat}
-            onChange={(e) => setManualLat(e.target.value)}
-            style={inputStyle}
-          />
-          <input
-            placeholder="Longitud"
-            value={manualLng}
-            onChange={(e) => setManualLng(e.target.value)}
-            style={inputStyle}
-          />
-        </div>
-      )}
-
-      {relocationMode === "map" && (
-        <div style={{ marginTop: 16, fontSize: 13, opacity: 0.6 }}>
-          Seleccioná una ubicación tocando el mapa. Se pedirá confirmación antes
-          de aplicar.
-        </div>
-      )}*/
 }

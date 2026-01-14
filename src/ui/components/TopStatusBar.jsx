@@ -1,8 +1,27 @@
 import { useNetworkStatus } from "../useNetworkStatus";
+import { useState, useEffect } from "react";
 
 export function TopStatusBar({ projectId }) {
   const isOnline = useNetworkStatus();
-  const coords = "-34.563773, -54.706666";
+  const [currentCoords, setCurrentCoords] = useState(null);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      const watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          setCurrentCoords({
+            lat: pos.coords.latitude.toFixed(6),
+            lng: pos.coords.longitude.toFixed(6),
+          });
+        },
+        () => {
+          setCurrentCoords(null);
+        },
+      );
+
+      return () => navigator.geolocation.clearWatch(watchId);
+    }
+  }, []);
 
   return (
     <>
@@ -37,7 +56,11 @@ export function TopStatusBar({ projectId }) {
             alignItems: "center",
           }}
         >
-          <span>{coords}</span>
+          <span>
+            {currentCoords
+              ? `${currentCoords.lat}, ${currentCoords.lng}`
+              : "Ubicación no disponible"}
+          </span>
           <strong>{projectId}</strong>
         </div>
       </div>
