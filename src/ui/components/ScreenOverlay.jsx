@@ -20,7 +20,10 @@ export function ScreenOverlay({ children }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: "clamp(20px, 5vh, 40px)",
+          paddingLeft: "clamp(20px, 5vh, 40px)",
+          paddingRight: "clamp(20px, 5vh, 40px)",
+          paddingTop: "clamp(40px, 8vh, 60px)",
+          paddingBottom: "clamp(40px, 8vh, 60px)",
         }}
       >
         {/* Modal interior */}
@@ -30,7 +33,7 @@ export function ScreenOverlay({ children }) {
             height: "100%",
             maxWidth: 900,
             background: "#ffffff",
-            borderRadius: 8,
+            borderRadius: 4,
             overflow: "hidden",
             boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
           }}

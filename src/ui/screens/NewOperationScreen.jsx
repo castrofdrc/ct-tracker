@@ -159,8 +159,8 @@ export function NewOperationScreen() {
         background: "#ffffff",
         paddingLeft: "10%",
         paddingRight: "10%",
-        paddingTop: "clamp(30px, 15vh, 48px)",
-        paddingBottom: "clamp(20px, 10vh, 30px)",
+        paddingTop: "clamp(40px, 8vh, 60px)",
+        paddingBottom: "clamp(20px, 5vh, 40px)",
         display: "flex",
         flexDirection: "column",
       }}
@@ -177,7 +177,7 @@ export function NewOperationScreen() {
         </div>
       </div>
 
-      <div style={{ marginBottom: 20 }}>
+      <div style={{ marginBottom: 10 }}>
         <div style={subtitleStyle}>
           {selectedCameraId ? "Cámara seleccionada" : "Seleccionar cámara"}
         </div>
@@ -207,7 +207,7 @@ export function NewOperationScreen() {
         style={{
           flex: 1,
           minHeight: 200,
-          borderRadius: 6,
+          borderRadius: 4,
           marginBottom: 0,
           overflow: "hidden",
         }}
@@ -217,7 +217,7 @@ export function NewOperationScreen() {
           <div
             style={{
               border: "1px solid #000",
-              borderRadius: 8,
+              borderRadius: 6,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -284,7 +284,7 @@ export function NewOperationScreen() {
           >
             <div
               style={{
-                marginTop: "clamp(32px, 5vh, 48px)",
+                marginTop: "clamp(12px, 5vh, 28px)",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -344,7 +344,7 @@ export function NewOperationScreen() {
               {selectedOperation === "maintenance" && (
                 <div
                   style={{
-                    marginTop: "clamp(32px, 5vh, 48px)",
+                    marginTop: "clamp(12px, 5vh, 28px)",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -401,7 +401,7 @@ export function NewOperationScreen() {
               {selectedOperation === "placement" && (
                 <div
                   style={{
-                    marginTop: "clamp(32px, 5vh, 48px)",
+                    marginTop: "clamp(12px, 5vh, 28px)",
                     display: "flex",
                     flexDirection: "column",
                   }}
@@ -474,12 +474,12 @@ export function NewOperationScreen() {
       {/* BLOQUE FIJO 2 - Solo visible cuando hay CT confirmada */}
 
       {selectedCameraId && (
-        <div style={{ display: "flex", gap: 20 }}>
+        <div style={{ display: "flex", gap: 10 }}>
           <button
             style={{
               flex: 1,
               height: 48,
-              borderRadius: 6,
+              borderRadius: 4,
               border: "1px solid #000",
               background: "#fff",
               fontWeight: "bold",
@@ -494,7 +494,7 @@ export function NewOperationScreen() {
             style={{
               flex: 1,
               height: 48,
-              borderRadius: 6,
+              borderRadius: 4,
               border: "1px solid #000",
               background: "#0a0a0a",
               color: "#fff",
@@ -533,7 +533,7 @@ export function NewOperationScreen() {
           </button>
         </div>
       )}
-      <div style={{ height: 40 }} />
+      <div style={{ height: 0 }} />
     </div>
   );
 }
