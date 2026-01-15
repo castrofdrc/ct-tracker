@@ -28,7 +28,14 @@ export function NewCameraScreen() {
   };
 
   return (
-    <div style={{ position: "fixed", inset: 0, padding: "15%" }}>
+    <div
+      style={{
+        position: "relative", // ⬅️ Cambio
+        width: "100%",
+        height: "100%",
+        padding: "10%",
+      }}
+    >
       <button onClick={() => ui.goTo("main")}>← Nueva cámara</button>
 
       <div style={{ marginTop: 40 }}>

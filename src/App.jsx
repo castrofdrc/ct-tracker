@@ -16,6 +16,7 @@ import { LoadingScreen } from "./ui/screens/LoadingScreen";
 import { NewOperationScreen } from "./ui/screens/NewOperationScreen";
 import { MapPickerScreen } from "./ui/screens/MapPickerScreen";
 import { NewCameraScreen } from "./ui/screens/NewCameraScreen";
+import { ScreenOverlay } from "./ui/components/ScreenOverlay";
 
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -68,24 +69,33 @@ function App() {
       </UIContext.Provider>
     );
   }
-
   return (
-    // <UIContext.Provider value={ui}>
-    //   <ProjectContext.Provider value={project}>
-    //     {ui.activeScreen === "main" && <MainScreen />}
-    //     {ui.activeScreen === "newAction" && <NewActionScreen />}
-    //     {ui.activeScreen === "cameraList" && <CameraListScreen />}
-    //     {ui.activeScreen === "settings" && <SettingsScreen />}
-    //   </ProjectContext.Provider>
-    // </UIContext.Provider>
-
     <UIContext.Provider value={ui}>
       <ProjectContext.Provider value={project}>
-        {screen === "main" && <MainScreen />}
-        {screen === "settings" && <SettingsScreen />}
-        {screen === "newAction" && <NewOperationScreen />}
+        {/* MainScreen NO se renderiza cuando estás en mapPicker */}
+        {ui.selectedProjectId && screen !== "mapPicker" && <MainScreen />}
+
+        {/* Overlay para pantallas modales */}
+        {screen === "settings" && (
+          <ScreenOverlay>
+            <SettingsScreen />
+          </ScreenOverlay>
+        )}
+
+        {screen === "newAction" && (
+          <ScreenOverlay>
+            <NewOperationScreen />
+          </ScreenOverlay>
+        )}
+
+        {screen === "newCamera" && (
+          <ScreenOverlay>
+            <NewCameraScreen />
+          </ScreenOverlay>
+        )}
+
+        {/* MapPicker sigue siendo pantalla completa */}
         {screen === "mapPicker" && <MapPickerScreen />}
-        {screen === "newCamera" && <NewCameraScreen />}
       </ProjectContext.Provider>
     </UIContext.Provider>
   );

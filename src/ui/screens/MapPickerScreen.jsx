@@ -77,7 +77,7 @@ export function MapPickerScreen() {
             }}
             style={{
               height: 48,
-              borderRadius: 8,
+              borderRadius: 6,
               border: "1px solid #0A0A0A",
               fontSize: 14,
               textAlign: "left",

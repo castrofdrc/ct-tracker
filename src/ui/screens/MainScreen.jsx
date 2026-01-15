@@ -9,15 +9,27 @@ export function MainScreen() {
   const ui = useContext(UIContext);
   const project = useContext(ProjectContext);
 
+  // Detectar si hay un overlay activo
+  const hasOverlay = ["settings", "newAction", "newCamera"].includes(
+    ui.activeScreen,
+  );
+
   return (
     <>
-      <TopStatusBar projectId={ui.selectedProjectId} />
-      <BottomActionBar />
+      {/* Solo mostrar barras cuando NO hay overlay */}
+      {!hasOverlay && (
+        <>
+          <TopStatusBar projectId={ui.selectedProjectId} />
+          <BottomActionBar />
+        </>
+      )}
 
       <div style={{ position: "fixed", inset: 0, zIndex: 0 }}>
         <CameraMap cameras={project.cameras} />
       </div>
-      {ui.addActionButton && (
+
+      {/* Botones flotantes de acción */}
+      {ui.addActionButton && !hasOverlay && (
         <div
           style={{
             position: "fixed",

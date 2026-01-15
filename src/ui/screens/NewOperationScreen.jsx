@@ -28,7 +28,7 @@ export function NewOperationScreen() {
 
   const actionButtonStyle = {
     height: 48,
-    borderRadius: 8,
+    borderRadius: 6,
     border: "1px solid #0A0A0A",
     fontSize: 14,
     textAlign: "left",
@@ -38,7 +38,7 @@ export function NewOperationScreen() {
 
   const inputStyle = {
     height: 48,
-    borderRadius: 8,
+    borderRadius: 6,
     border: "1px solid #0A0A0A",
     padding: "0 20px",
     fontSize: 14,
@@ -142,34 +142,29 @@ export function NewOperationScreen() {
     }
   }, [pendingCameraState, setPendingCameraState]);
 
+  useEffect(() => {
+    if (selectedCameraId && selectedCamera) {
+      if (selectedCamera.derivedState === "inactive") {
+        setPendingOperation("placement");
+      }
+    }
+  }, [selectedCameraId, selectedCamera, setPendingOperation]);
+
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
+        position: "relative",
+        width: "100%",
+        height: "100%",
         background: "#ffffff",
-        paddingLeft: "15%",
-        paddingRight: "15%",
+        paddingLeft: "10%",
+        paddingRight: "10%",
         paddingTop: "clamp(30px, 15vh, 48px)",
-        paddingBottom: "clamp(30px, 15vh, 48px)",
+        paddingBottom: "clamp(20px, 10vh, 30px)",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      {/* <div style={{ height: 44, display: "flex", alignItems: "center" }}>
-        <button
-          onClick={() => ui.goTo("main")}
-          style={{
-            background: "none",
-            border: "none",
-            fontSize: 16,
-            fontWeight: 600,
-          }}
-        >
-          ← Nueva operación
-        </button>
-      </div>*/}
-
       <div style={{ marginBottom: 20 }}>
         <div
           style={{
@@ -190,10 +185,19 @@ export function NewOperationScreen() {
         <button
           onClick={() => {
             setSelectedCameraId(null);
+            setPendingOperation(null);
+            setMaintenanceType(null);
+            setLat("");
+            setLng("");
+            setLocationMethod(null);
           }}
-          style={inputStyle}
+          style={{
+            ...inputStyle,
+            background: selectedCameraId ? "#E4E4E4" : "#ffffff",
+            fontWeight: selectedCameraId ? 700 : 400,
+          }}
         >
-          {selectedCameraId || "CT_001"}
+          {selectedCameraId || "Seleccionar cámara..."}
         </button>
       </div>
 
@@ -203,8 +207,8 @@ export function NewOperationScreen() {
         style={{
           flex: 1,
           minHeight: 200,
-          borderRadius: 8,
-          marginBottom: 40,
+          borderRadius: 6,
+          marginBottom: 0,
           overflow: "hidden",
         }}
       >
@@ -213,7 +217,7 @@ export function NewOperationScreen() {
           <div
             style={{
               border: "1px solid #000",
-              borderRadius: 10,
+              borderRadius: 8,
               overflow: "hidden",
               display: "flex",
               flexDirection: "column",
@@ -243,7 +247,10 @@ export function NewOperationScreen() {
                 .map((camera) => (
                   <button
                     key={camera.id}
-                    onClick={() => setPickedCameraId(camera.id)}
+                    onClick={() => {
+                      setSelectedCameraId(camera.id);
+                      setSearch("");
+                    }}
                     style={{
                       width: "100%",
                       height: 48,
@@ -464,76 +471,68 @@ export function NewOperationScreen() {
         )}
       </div>
 
-      {/* BLOQUE FIJO 2 */}
+      {/* BLOQUE FIJO 2 - Solo visible cuando hay CT confirmada */}
 
-      <div style={{ display: "flex", gap: 20 }}>
-        <button
-          style={{
-            flex: 1,
-            height: 48,
-            borderRadius: 8,
-            border: "1px solid #000",
-            background: "#fff",
-            fontWeight: "bold",
-            fontSize: 14,
-          }}
-          onClick={() => ui.goTo("main")}
-        >
-          Cancelar
-        </button>
+      {selectedCameraId && (
+        <div style={{ display: "flex", gap: 20 }}>
+          <button
+            style={{
+              flex: 1,
+              height: 48,
+              borderRadius: 6,
+              border: "1px solid #000",
+              background: "#fff",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}
+            onClick={() => ui.goTo("main")}
+          >
+            Cancelar
+          </button>
 
-        <button
-          style={{
-            flex: 1,
-            height: 48,
-            borderRadius: 8,
-            border: "1px solid #000",
-            background: "#0a0a0a",
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: 14,
-          }}
-          disabled={!pickedCameraId && !canAccept}
-          onClick={async () => {
-            // 1️⃣ Confirmar CT (NO ejecutar operación)
-            if (!selectedCameraId && pickedCameraId) {
-              setSelectedCameraId(pickedCameraId);
-              setPickedCameraId(null);
-              setSearch("");
-              return;
-            }
+          <button
+            style={{
+              flex: 1,
+              height: 48,
+              borderRadius: 6,
+              border: "1px solid #000",
+              background: "#0a0a0a",
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}
+            disabled={!canAccept}
+            onClick={async () => {
+              try {
+                if (selectedOperation === "placement") {
+                  await project.placeCamera(
+                    selectedCameraId,
+                    Number(lat),
+                    Number(lng),
+                  );
+                }
 
-            // 2️⃣ Confirmar operación final
-            try {
-              if (selectedOperation === "placement") {
-                await project.placeCamera(
-                  selectedCameraId,
-                  Number(lat),
-                  Number(lng),
-                );
+                if (selectedOperation === "removal") {
+                  await project.removeCamera(selectedCameraId);
+                }
+
+                if (selectedOperation === "maintenance") {
+                  await project.maintenanceCamera(
+                    selectedCameraId,
+                    maintenanceType,
+                  );
+                }
+
+                ui.goTo("main");
+              } catch (err) {
+                alert(err.message);
               }
-
-              if (selectedOperation === "removal") {
-                await project.removeCamera(selectedCameraId);
-              }
-
-              if (selectedOperation === "maintenance") {
-                await project.maintenanceCamera(
-                  selectedCameraId,
-                  maintenanceType,
-                );
-              }
-
-              ui.goTo("main");
-            } catch (err) {
-              alert(err.message);
-            }
-          }}
-        >
-          Aceptar
-        </button>
-      </div>
-
+            }}
+          >
+            Aceptar
+          </button>
+        </div>
+      )}
       <div style={{ height: 40 }} />
     </div>
   );

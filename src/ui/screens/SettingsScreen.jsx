@@ -12,7 +12,7 @@ export function SettingsScreen() {
   const actionStyle = {
     width: "100%",
     height: 55, // Estandarizado con Login/ProjectSelector
-    borderRadius: 8,
+    borderRadius: 6,
     border: "1px solid #0A0A0A", // Color consistente
     background: "#ffffff",
     fontSize: 16,
@@ -34,12 +34,13 @@ export function SettingsScreen() {
   return (
     <div
       style={{
-        position: "fixed",
-        inset: 0,
+        position: "relative",
+        width: "100%",
+        height: "100%",
         background: "#ffffff",
         display: "flex",
-        justifyContent: "center", // Centrado horizontal para tablets/desktop
-        zIndex: 2000, // Asegura que tape todo
+        justifyContent: "center",
+        zIndex: 2000,
       }}
     >
       <div
@@ -83,7 +84,6 @@ export function SettingsScreen() {
             }}
           >
             <span style={{ fontSize: 24, lineHeight: 0.5 }}>←</span>
-            Ajustes
           </button>
         </div>
 

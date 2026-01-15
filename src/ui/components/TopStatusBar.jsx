@@ -33,13 +33,7 @@ export function TopStatusBar({ projectId }) {
           right: 8,
           height: 32,
           zIndex: 100,
-
-          // Effecto blur
-          background: "rgba(255, 255, 255, 0.2)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          // Effecto blur
-
+          background: "#ffffff",
           borderRadius: "6px",
           border: "1px solid #0a0a0a",
           padding: "0 20px",

@@ -16,13 +16,7 @@ export function BottomActionBar() {
         right: 12,
         height: 48,
         zIndex: 100,
-
-        // Effecto blur
-        background: "rgba(255, 255, 255, 0.4)",
-        backdropFilter: "blur(10px)",
-        WebkitBackdropFilter: "blur(10px)",
-        // Effecto blur
-
+        background: "#ffffff",
         borderRadius: "8px",
         border: "1px solid #0a0a0a",
         display: "flex",
