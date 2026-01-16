@@ -23,7 +23,17 @@ service cloud.firestore {
 
     match /projects/{projectId} {
       allow read: if isAuthenticated();
-      allow write: if false;
+
+      // ⬅️ NUEVO: Permitir creación de proyectos
+      allow create: if isAuthenticated()
+        && request.resource.data.members.hasAll([request.auth.uid])
+        && request.resource.data.keys().hasAll(['name', 'members', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 3
+        && request.resource.data.name.size() <= 50;
+
+      // No permitir edición/eliminación por ahora
+      allow update, delete: if false;
     }
 
     match /cameras/{cameraId} {

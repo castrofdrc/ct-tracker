@@ -11,22 +11,22 @@ export function SettingsScreen() {
 
   const actionStyle = {
     width: "100%",
-    height: 55, // Estandarizado con Login/ProjectSelector
+    height: 55,
     borderRadius: 6,
-    border: "1px solid #0A0A0A", // Color consistente
+    border: "1px solid #0A0A0A",
     background: "#ffffff",
     fontSize: 16,
-    fontWeight: 500, // Roboto Medium
+    fontWeight: 500,
     display: "flex",
     alignItems: "center",
-    gap: 16, // Más aire entre icono y texto
+    gap: 16,
     padding: "0 20px",
     cursor: "pointer",
     textAlign: "left",
   };
 
   const iconStyle = {
-    width: 24, // Iconos ligeramente más grandes para balancear los 55px de alto
+    width: 24,
     height: 24,
     objectFit: "contain",
   };
@@ -46,13 +46,12 @@ export function SettingsScreen() {
       <div
         style={{
           width: "100%",
-          maxWidth: 430, // Mismo contenedor que pantallas anteriores
+          maxWidth: 430,
           height: "100%",
           display: "flex",
           flexDirection: "column",
           paddingLeft: "15%",
-          paddingRight: "15%", // Margen lateral seguro
-          // Padding superior dinámico para salvar el Notch
+          paddingRight: "15%",
           paddingTop: "calc(16px + env(safe-area-inset-top))",
           paddingBottom: "calc(20px + env(safe-area-inset-bottom))",
           boxSizing: "border-box",
@@ -61,11 +60,11 @@ export function SettingsScreen() {
         {/* Header de Navegación */}
         <div
           style={{
-            height: 60, // Área de toque generosa para volver
+            height: 60,
             display: "flex",
             alignItems: "center",
             marginBottom: 20,
-            marginLeft: -8, // Compensación óptica para alinear el icono con el borde
+            marginLeft: -8,
           }}
         >
           <button
@@ -76,10 +75,10 @@ export function SettingsScreen() {
               display: "flex",
               alignItems: "center",
               gap: 8,
-              fontSize: 18, // Título más prominente
+              fontSize: 18,
               fontWeight: 700,
               cursor: "pointer",
-              padding: "10px 8px", // Hitbox invisible más grande
+              padding: "10px 8px",
               color: "#0A0A0A",
             }}
           >
@@ -95,6 +94,7 @@ export function SettingsScreen() {
             gap: 16,
           }}
         >
+          {/* ===== SECCIÓN: PROYECTO ===== */}
           <h2
             style={{
               fontSize: 14,
@@ -105,8 +105,14 @@ export function SettingsScreen() {
               letterSpacing: "0.5px",
             }}
           >
-            General
+            Proyecto
           </h2>
+
+          {/* Crear nuevo proyecto */}
+          <button onClick={() => ui.goTo("newProject")} style={actionStyle}>
+            <span style={{ fontSize: 24 }}>+</span>
+            Crear nuevo proyecto
+          </button>
 
           {/* Salir del proyecto */}
           <button
@@ -122,6 +128,7 @@ export function SettingsScreen() {
 
           <div style={{ height: 20 }} />
 
+          {/* ===== SECCIÓN: CUENTA ===== */}
           <h2
             style={{
               fontSize: 14,
@@ -143,18 +150,17 @@ export function SettingsScreen() {
             }}
             style={{
               ...actionStyle,
-              borderColor: "#fee2e2", // Borde rojo muy sutil
-              background: "#fef2f2", // Fondo rojo muy sutil (alerta)
+              borderColor: "#fee2e2",
+              background: "#fef2f2",
               color: "#dc2626",
             }}
           >
-            {/* Nota: Si el SVG no es rojo nativamente, necesitarás una máscara CSS o un SVG diferente */}
             <img src={logoutIcon} alt="" style={iconStyle} />
             Cerrar sesión
           </button>
         </div>
 
-        {/* Versión de la app (buena práctica en settings) */}
+        {/* Versión de la app */}
         <div style={{ flex: 1 }} />
         <div
           style={{

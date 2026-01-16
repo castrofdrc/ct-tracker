@@ -23,6 +23,7 @@ export function useUI() {
     "settings",
     "mapPicker",
     "newCamera",
+    "newProject", // ⬅️ NUEVA PANTALLA
   ];
 
   const goTo = (screen) => {

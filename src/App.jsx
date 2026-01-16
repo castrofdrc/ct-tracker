@@ -16,6 +16,7 @@ import { LoadingScreen } from "./ui/screens/LoadingScreen";
 import { NewOperationScreen } from "./ui/screens/NewOperationScreen";
 import { MapPickerScreen } from "./ui/screens/MapPickerScreen";
 import { NewCameraScreen } from "./ui/screens/NewCameraScreen";
+import { NewProjectScreen } from "./ui/screens/NewProjectScreen"; // ⬅️ NUEVO IMPORT
 import { ScreenOverlay } from "./ui/components/ScreenOverlay";
 
 import "leaflet/dist/leaflet.css";
@@ -69,6 +70,7 @@ function App() {
       </UIContext.Provider>
     );
   }
+
   return (
     <UIContext.Provider value={ui}>
       <ProjectContext.Provider value={project}>
@@ -91,6 +93,13 @@ function App() {
         {screen === "newCamera" && (
           <ScreenOverlay>
             <NewCameraScreen />
+          </ScreenOverlay>
+        )}
+
+        {/* ⬅️ NUEVA PANTALLA */}
+        {screen === "newProject" && (
+          <ScreenOverlay>
+            <NewProjectScreen />
           </ScreenOverlay>
         )}
 
