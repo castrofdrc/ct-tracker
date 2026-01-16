@@ -56,11 +56,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubscribers = cameras.map((camera) =>
       listenToOperations(
-        camera.id,
+        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
         (ops) =>
           setOperationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: ops,
+            [camera.id]: ops, // ⬅️ Pero indexar por id display para UI
           })),
         () => {},
       ),
@@ -110,11 +110,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubs = cameras.map((camera) =>
       listenToLastLocation(
-        camera.id,
+        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
         (loc) =>
           setLastLocationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: loc, // puede ser null
+            [camera.id]: loc, // ⬅️ Indexar por id display
           })),
         () => {},
       ),
@@ -130,11 +130,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubs = cameras.map((camera) =>
       listenToLocations(
-        camera.id,
+        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
         (locs) =>
           setLocationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: locs,
+            [camera.id]: locs, // ⬅️ Indexar por id display
           })),
         () => {},
       ),

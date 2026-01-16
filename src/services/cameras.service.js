@@ -11,6 +11,40 @@ import { db } from "../firebase";
 import { createOperation } from "./operations.service";
 import { addLocation } from "./locations.service";
 
+// ============================================
+// HELPERS PARA IDs COMPUESTOS
+// ============================================
+
+/**
+ * Genera el ID de documento en Firestore: projectId__cameraId
+ * Ejemplo: "proyectoA__CT001"
+ */
+function getFirestoreDocId(projectId, cameraId) {
+  return `${projectId}__${cameraId}`;
+}
+
+/**
+ * Extrae el cameraId display del ID compuesto de Firestore
+ * Ejemplo: "proyectoA__CT001" → "CT001"
+ */
+export function extractCameraId(firestoreDocId) {
+  const parts = firestoreDocId.split("__");
+  return parts.length === 2 ? parts[1] : firestoreDocId;
+}
+
+/**
+ * Extrae el projectId del ID compuesto de Firestore
+ * Ejemplo: "proyectoA__CT001" → "proyectoA"
+ */
+export function extractProjectId(firestoreDocId) {
+  const parts = firestoreDocId.split("__");
+  return parts.length === 2 ? parts[0] : null;
+}
+
+// ============================================
+// SERVICIOS PRINCIPALES
+// ============================================
+
 export function listenToCameras(projectId, onChange, onError) {
   const q = query(
     collection(db, "cameras"),
@@ -21,7 +55,10 @@ export function listenToCameras(projectId, onChange, onError) {
     q,
     (snapshot) => {
       const cameras = snapshot.docs.map((doc) => ({
-        id: doc.id,
+        // ID de Firestore (compuesto): "proyectoA__CT001"
+        firestoreId: doc.id,
+        // ID display (limpio): "CT001"
+        id: extractCameraId(doc.id),
         ...doc.data(),
       }));
       onChange(cameras);
@@ -31,7 +68,9 @@ export function listenToCameras(projectId, onChange, onError) {
 }
 
 export async function createCamera(cameraId, projectId) {
-  const ref = doc(db, "cameras", cameraId);
+  // Generar ID compuesto para Firestore
+  const firestoreDocId = getFirestoreDocId(projectId, cameraId);
+  const ref = doc(db, "cameras", firestoreDocId);
 
   await setDoc(ref, {
     projectId,
@@ -39,7 +78,8 @@ export async function createCamera(cameraId, projectId) {
     updatedAt: serverTimestamp(),
   });
 
-  await createOperation(cameraId, projectId, "deploy", {});
+  // Crear operación inicial de deploy
+  await createOperation(firestoreDocId, projectId, "deploy", {});
 }
 
 export async function placeCamera(cameraId, projectId, lat, lng) {
@@ -54,9 +94,12 @@ export async function placeCamera(cameraId, projectId, lat, lng) {
     throw new Error("Coordenadas inválidas. Lat: -90 a 90, Lng: -180 a 180");
   }
 
-  await createOperation(cameraId, projectId, "placement");
+  // Generar ID compuesto
+  const firestoreDocId = getFirestoreDocId(projectId, cameraId);
+
+  await createOperation(firestoreDocId, projectId, "placement");
   await addLocation({
-    cameraId,
+    cameraId: firestoreDocId, // ⬅️ Usamos el ID compuesto
     projectId,
     lat,
     lng,
@@ -65,5 +108,8 @@ export async function placeCamera(cameraId, projectId, lat, lng) {
 }
 
 export async function removeCamera(cameraId, projectId) {
-  await createOperation(cameraId, projectId, "removal");
+  // Generar ID compuesto
+  const firestoreDocId = getFirestoreDocId(projectId, cameraId);
+
+  await createOperation(firestoreDocId, projectId, "removal");
 }

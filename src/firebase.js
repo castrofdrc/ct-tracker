@@ -25,7 +25,7 @@ export const db = initializeFirestore(app, {
 });
 
 // 🔑 CONTROL MANUAL (claro)
-const USE_EMULATOR = false; // true
+const USE_EMULATOR = true; // true
 
 if (USE_EMULATOR) {
   connectAuthEmulator(auth, "http://127.0.0.1:9099");

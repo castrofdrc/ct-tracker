@@ -13,8 +13,9 @@ export function NewCameraScreen() {
       return;
     }
 
-    if (!/^CT_\d{3}$/.test(cameraId)) {
-      alert("Formato inválido. Usar CT_XXX (ej: CT_005)");
+    // ⬅️ CAMBIO: Nueva regex sin guion bajo
+    if (!/^CT\d{3}$/.test(cameraId)) {
+      alert("Formato inválido. Usar CTXXX (ej: CT005)");
       return;
     }
 
@@ -30,7 +31,7 @@ export function NewCameraScreen() {
   return (
     <div
       style={{
-        position: "relative", // ⬅️ Cambio
+        position: "relative",
         width: "100%",
         height: "100%",
         padding: "10%",
@@ -40,7 +41,7 @@ export function NewCameraScreen() {
 
       <div style={{ marginTop: 40 }}>
         <input
-          placeholder="CT_001"
+          placeholder="CT001"
           value={cameraId}
           onChange={(e) => setCameraId(e.target.value)}
           style={{ width: "100%", height: 44 }}

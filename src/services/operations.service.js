@@ -12,6 +12,22 @@ import {
   assertNotRemoved,
 } from "../domain/operationGuards";
 
+// ============================================
+// HELPER PARA ID COMPUESTO
+// ============================================
+
+/**
+ * Genera el ID de documento en Firestore: projectId__cameraId
+ * (Misma lógica que en cameras.service.js)
+ */
+function getFirestoreDocId(projectId, cameraId) {
+  return `${projectId}__${cameraId}`;
+}
+
+// ============================================
+// SERVICIOS
+// ============================================
+
 export function listenToOperations(cameraId, onChange, onError) {
   const q = query(
     collection(db, "cameras", cameraId, "operations"),
@@ -57,7 +73,10 @@ export async function createMaintenance(
   assertCameraIsActive(operations);
   assertNotRemoved(operations);
 
-  return createOperation(cameraId, projectId, "maintenance", {
+  // Generar ID compuesto para Firestore
+  const firestoreDocId = getFirestoreDocId(projectId, cameraId);
+
+  return createOperation(firestoreDocId, projectId, "maintenance", {
     maintenanceType,
   });
 }
