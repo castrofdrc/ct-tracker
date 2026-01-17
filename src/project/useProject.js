@@ -56,11 +56,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubscribers = cameras.map((camera) =>
       listenToOperations(
-        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
+        camera.firestoreId,
         (ops) =>
           setOperationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: ops, // ⬅️ Pero indexar por id display para UI
+            [camera.id]: ops,
           })),
         () => {},
       ),
@@ -84,14 +84,12 @@ export function useProject({ projectId, authLoading, user }) {
     });
 
     userIds.forEach((uid) => {
-      // ya tenemos el usuario cacheado → no hacemos nada
       if (usersById[uid]) return;
 
       listenToUser(
         uid,
         (user) => {
           setUsersById((prev) => {
-            // evitar re-render inútil
             if (prev[uid]) return prev;
             return { ...prev, [uid]: user };
           });
@@ -101,7 +99,7 @@ export function useProject({ projectId, authLoading, user }) {
         },
       );
     });
-  }, [operationsByCamera, projectId]); // ⬅️ usersById NO VA ACÁ
+  }, [operationsByCamera, projectId]);
 
   // Ubicaciones
   useEffect(() => {
@@ -110,11 +108,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubs = cameras.map((camera) =>
       listenToLastLocation(
-        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
+        camera.firestoreId,
         (loc) =>
           setLastLocationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: loc, // ⬅️ Indexar por id display
+            [camera.id]: loc,
           })),
         () => {},
       ),
@@ -130,11 +128,11 @@ export function useProject({ projectId, authLoading, user }) {
 
     const unsubs = cameras.map((camera) =>
       listenToLocations(
-        camera.firestoreId, // ⬅️ CAMBIO: Usar firestoreId para Firestore
+        camera.firestoreId,
         (locs) =>
           setLocationsByCamera((prev) => ({
             ...prev,
-            [camera.id]: locs, // ⬅️ Indexar por id display
+            [camera.id]: locs,
           })),
         () => {},
       ),
@@ -143,8 +141,9 @@ export function useProject({ projectId, authLoading, user }) {
     return () => unsubs.forEach((u) => u());
   }, [authLoading, user, projectId, cameras]);
 
-  const createCameraForProject = (cameraId) => {
-    return createCamera(cameraId, projectId);
+  // ⬅️ CAMBIO: Ahora acepta campos opcionales
+  const createCameraForProject = (cameraId, optionalFields = {}) => {
+    return createCamera(cameraId, projectId, optionalFields);
   };
 
   const placeCameraForProject = (cameraId, lat, lng) => {

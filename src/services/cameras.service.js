@@ -67,16 +67,56 @@ export function listenToCameras(projectId, onChange, onError) {
   );
 }
 
-export async function createCamera(cameraId, projectId) {
+/**
+ * Crea una nueva cámara con campos opcionales
+ *
+ * @param {string} cameraId - ID display (ej: "CT001")
+ * @param {string} projectId - ID del proyecto
+ * @param {Object} optionalFields - Campos opcionales
+ * @param {string} [optionalFields.brand] - Marca y modelo (máx 50 chars)
+ * @param {number} [optionalFields.batteries] - Cantidad de pilas (1-12)
+ * @param {number} [optionalFields.sdCapacity] - Capacidad SD en GB (8, 16, 32, 64, 128, 256)
+ * @param {string} [optionalFields.comments] - Comentarios (máx 250 chars)
+ */
+export async function createCamera(cameraId, projectId, optionalFields = {}) {
   // Generar ID compuesto para Firestore
   const firestoreDocId = getFirestoreDocId(projectId, cameraId);
   const ref = doc(db, "cameras", firestoreDocId);
 
-  await setDoc(ref, {
+  // Construir objeto de datos base
+  const cameraData = {
     projectId,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
-  });
+  };
+
+  // Agregar campos opcionales solo si tienen valor
+  if (optionalFields.brand && optionalFields.brand.trim()) {
+    cameraData.brand = optionalFields.brand.trim().substring(0, 50);
+  }
+
+  if (optionalFields.batteries && Number.isInteger(optionalFields.batteries)) {
+    // Validar rango 1-12
+    const batteries = Math.max(1, Math.min(12, optionalFields.batteries));
+    cameraData.batteries = batteries;
+  }
+
+  if (
+    optionalFields.sdCapacity &&
+    Number.isInteger(optionalFields.sdCapacity)
+  ) {
+    // Validar que sea uno de los valores permitidos
+    const validCapacities = [8, 16, 32, 64, 128, 256];
+    if (validCapacities.includes(optionalFields.sdCapacity)) {
+      cameraData.sdCapacity = optionalFields.sdCapacity;
+    }
+  }
+
+  if (optionalFields.comments && optionalFields.comments.trim()) {
+    cameraData.comments = optionalFields.comments.trim().substring(0, 250);
+  }
+
+  await setDoc(ref, cameraData);
 
   // Crear operación inicial de deploy
   await createOperation(firestoreDocId, projectId, "deploy", {});
@@ -99,7 +139,7 @@ export async function placeCamera(cameraId, projectId, lat, lng) {
 
   await createOperation(firestoreDocId, projectId, "placement");
   await addLocation({
-    cameraId: firestoreDocId, // ⬅️ Usamos el ID compuesto
+    cameraId: firestoreDocId,
     projectId,
     lat,
     lng,
